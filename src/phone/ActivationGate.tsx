@@ -53,7 +53,7 @@ export function ActivationGate({ children }: { children: ReactNode }) {
     <div className="activation-gate">
       <div className="activation-card">
         <div className="activation-icon">📱</div>
-        <h2>布丁机 Purin</h2>
+        <h2>Purin</h2>
         <div className="activation-status">
           {state.status === "unactivated" ? "请输入激活码" : state.message || "授权已失效"}
         </div>

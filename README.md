@@ -1,4 +1,4 @@
-# Purin · 布丁机
+# Purin
 
 一个跑在浏览器里的"手机"：桌面、App、通知、主题一应俱全，里面的角色由任意
 OpenAI 兼容 API（OpenAI / DeepSeek / 硅基流动 / Ollama / LM Studio …）驱动。

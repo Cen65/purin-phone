@@ -263,7 +263,7 @@ export default function SettingsApp(_props: AppProps) {
           {unbindMessage ? <p className="about-text">{unbindMessage}</p> : null}
         </Field>
         <p className="about-text">
-          布丁机 Purin v0.1.0 —— 一部跑在浏览器里的虚拟手机。
+          Purin v0.1.0 —— 一部跑在浏览器里的虚拟手机。
           桌面上的每个应用都通过 App 注册表接入，欢迎按 docs/EXTENDING.md 写一个自己的 App。
         </p>
       </Section>
