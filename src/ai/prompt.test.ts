@@ -109,3 +109,50 @@ describe("buildGroupMessages 群聊映射（P1）", () => {
     expect(messages[1]?.content).toBe("我：hi");
   });
 });
+
+describe("世界书注入（P3）", () => {
+  const history: ChatMessage[] = [
+    { id: "1", role: "user", content: "吃拉面吗", createdAt: 1, status: "done" },
+  ];
+
+  it("system 段进主提示词、context 段插在最后一条 user 前", () => {
+    const messages = buildMessages({
+      character,
+      persona: { nickname: "" },
+      history,
+      worldbook: { system: "【食堂】深夜营业", context: "【此刻】用户饿了" },
+    });
+    expect(messages[0]?.content).toContain("世界书设定");
+    expect(messages[0]?.content).toContain("【食堂】深夜营业");
+    expect(messages[1]?.role).toBe("system");
+    expect(messages[1]?.content).toContain("（此刻的背景补充）");
+    expect(messages[1]?.content).toContain("【此刻】用户饿了");
+    expect(messages[2]).toEqual({ role: "user", content: "吃拉面吗" });
+  });
+
+  it("空世界书时消息结构与无参数一致", () => {
+    const messages = buildMessages({
+      character,
+      persona: { nickname: "" },
+      history,
+      worldbook: { system: "", context: "" },
+    });
+    expect(messages.map((message) => message.role)).toEqual(["system", "user"]);
+  });
+
+  it("对话示例注入 system；群聊同样支持世界书", () => {
+    const alice: Character = { id: "a", name: "爱丽丝", avatar: "🅰", tagline: "", systemPrompt: "", exampleDialogue: "用户：在吗\n爱丽丝：嗯", createdAt: 0 };
+    const messages = buildGroupMessages({
+      character: alice,
+      group: { name: "群" },
+      members: [alice],
+      persona: { nickname: "" },
+      history,
+      worldbook: { system: "【规则】夜晚安静", context: "" },
+    });
+    expect(messages[0]?.content).toContain("对话示例");
+    expect(messages[0]?.content).toContain("在吗");
+    expect(messages[0]?.content).toContain("【规则】夜晚安静");
+    expect(messages[1]?.role).toBe("user"); // 无 context 段时不插入补充消息
+  });
+});

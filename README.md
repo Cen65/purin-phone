@@ -26,21 +26,23 @@ pnpm preview  # 预览构建产物
 | 能力 | 说明 |
 | --- | --- |
 | 手机系统 | 状态栏（时钟/通知/锁屏）/ 桌面网格 / Dock / 底部导航 / 通知 Toast / 应用错误隔离 |
-| App 注册表 | `registerApp()` 动态注册，内置：聊天 💬、联系人 👥、朋友圈 🌟、便签 📝、设置 ⚙️ |
+| App 注册表 | `registerApp()` 动态注册，内置：聊天 💬、联系人 👥、世界书 📖、朋友圈 🌟、便签 📝、设置 ⚙️ |
 | AI 对话 | OpenAI 兼容 /chat/completions，SSE 流式输出，失败气泡内一键重新生成，**生成中可停止** |
 | Markdown | AI 回复渲染粗体/斜体/行内码/代码块/链接/引用（零依赖、转义优先防注入） |
 | 群聊 | 多角色会话：成员按序回复、单人失败不拦后续、气泡带发言人头像 |
-| 角色卡 | JSON 导入导出（`purin.character` 格式，兼容导入旧 `my-phone.character`），长期记忆字段注入提示词 |
+| 角色卡 | JSON 导入导出（`purin.character` v1.1，含开场白/对话示例，兼容旧 `my-phone.character`）；.txt/.md 标签式导入；✨ AI 捏人向导 |
+| 世界书 | 背景知识库：条目 常驻/关键词/正则 触发 + 优先级 + 插入位置，挂角色或群（成员取并集），JSON/txt 导入导出 + 触发测试器 |
+| 记忆 | 每角色长期记忆注入提示词；聊天页 🧠 一键让 AI 总结合并最近对话（弹窗确认后保存） |
 | 朋友圈 | 手动发帖 + AI 角色随机生成动态，点赞 / 评论 / #话题 |
 | 模拟来电 | 联系人拨号 → 全屏通话（接听/拒接/快捷语/计时），挂断自动转写进聊天 |
 | 通知中心 | 🔔 下拉收件箱（最近 20 条）、未读角标、点击跳转；锁屏大时钟 |
 | 深链路由 | `#/app/{id}?{params}` hash 同步，刷新还原、浏览器前进/后退 |
 | 多服务商 | Provider 抽象 + 注册表；常用预设一键填入（DeepSeek/OpenAI/Kimi/硅基流动/OpenRouter/Ollama） |
-| 主题 | CSS 变量主题系统，内置清白 / 夜色 / 抹茶三套，可编程扩展 |
+| 主题 | CSS 变量主题系统，内置清白/夜色/抹茶/布丁/夜葡萄五套，`purin.theme` JSON 主题包导入导出 |
 | 持久化 | zustand persist + localStorage 适配层（未来无痛换 IndexedDB） |
 | 事件总线 | 类型化事件解耦：聊天完成 → 通知 → 角标，App 之间零直接依赖 |
 | 商用接缝 | entitlement 授权抽象层：默认开放模式，可整体替换为激活码/账号服务器（[docs/COMMERCIAL-DESIGN.md](docs/COMMERCIAL-DESIGN.md)） |
-| 测试 | 68 个单测覆盖注册表 / SSE 解析 / 提示词组装 / 聊天状态机 / 群聊执行器 / 授权接缝 / 朋友圈 / 通话 |
+| 测试 | 107 个单测覆盖注册表 / SSE 解析 / 提示词组装(含世界书) / 聊天状态机 / 群聊执行器 / 角色卡解析 / 世界书解析 / 记忆合并 / 主题包 / 授权接缝 / 朋友圈 / 通话 |
 
 ## 架构一览
 
@@ -75,11 +77,11 @@ purin/
 ├─ public/
 │  └─ commercial.json       # 商用开关：open=单机版 / licensed=激活码模式
 ├─ src/
-│  ├─ ai/            # Provider 抽象、openai-compatible、预设、提示词(1v1/群/圈/通话)、运行器、创意生成
-│  ├─ apps/          # App 注册表 + 内置 App（chat/contacts/moments/notes/settings）
-│  ├─ core/          # 事件总线、id、存储适配、md 渲染、deeplink、下载、授权接缝、商用配置
+│  ├─ ai/            # Provider 抽象、openai-compatible、预设、提示词(1v1/群/圈/通话)、运行器、创意生成、AI 捏人、记忆总结
+│  ├─ apps/          # App 注册表 + 内置 App（chat/contacts/worldbook/moments/notes/settings）
+│  ├─ core/          # 事件总线、id、存储适配、md 渲染、deeplink、下载、世界书解析、授权接缝、商用配置
 │  ├─ phone/         # 手机壳（状态栏/锁屏/通知面板/通话层/激活门，不含业务）
-│  ├─ state/         # zustand store（settings/characters/chat/groups/moments/phone/notifications/call）
+│  ├─ state/         # zustand store（settings/characters/chat/groups/worldbooks/moments/phone/notifications/call）
 │  ├─ styles/        # global.css（全部样式，CSS 变量驱动）
 │  └─ theme/         # 主题定义与注册
 └─ license-server/   # 可选的激活码授权服务器（商用时才部署，见其 README）

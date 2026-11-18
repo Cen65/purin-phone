@@ -6,8 +6,10 @@ import { useGroupsStore, groupConversationId, livingMembers, type Group } from "
 import { usePhoneStore } from "../../state/phoneStore";
 import { useSettingsStore, isApiReady } from "../../state/settingsStore";
 import { sendMessage, sendGroupMessage, regenerate, stopGeneration } from "../../ai/chatRunner";
+import { mergeMemory } from "../../ai/memory";
 import { renderMarkdown } from "../../core/md";
 import { downloadTextFile } from "../../core/download";
+import { bus } from "../../core/events";
 import type { Character } from "../../types";
 
 /**
@@ -204,10 +206,14 @@ function Conversation({ character }: { character: Character }) {
   const messages = useChatStore((s) => s.messages[character.id]) ?? [];
   const generating = useChatStore((s) => s.generating[character.id]) ?? false;
   const clearConversation = useChatStore((s) => s.clearConversation);
+  const ensureFirstMessage = useChatStore((s) => s.ensureFirstMessage);
+  const updateCharacter = useCharactersStore((s) => s.updateCharacter);
   const api = useSettingsStore((s) => s.api);
   const nickname = useSettingsStore((s) => s.persona.nickname);
   const [draft, setDraft] = useState("");
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [memoryBusy, setMemoryBusy] = useState(false);
+  const [memoryDraft, setMemoryDraft] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const visible = messages.slice(-visibleCount);
@@ -217,6 +223,24 @@ function Conversation({ character }: { character: Character }) {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ block: "end" });
   }, [messages.length, lastMessage?.content]);
+
+  // 开场白：会话为空时自动说第一句（清空记录后回到开场白）
+  useEffect(() => {
+    if (character.firstMessage) ensureFirstMessage(character.id, character.firstMessage);
+  }, [character.id, character.firstMessage, messages.length, ensureFirstMessage]);
+
+  const summarizeMemory = async () => {
+    if (memoryBusy || generating || messages.length < 4) return;
+    setMemoryBusy(true);
+    try {
+      setMemoryDraft(await mergeMemory(character.id));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      bus.emit("notify", { kind: "error", title: "记忆总结失败", body: message.slice(0, 80) });
+    } finally {
+      setMemoryBusy(false);
+    }
+  };
 
   const submit = () => {
     const text = draft.trim();
@@ -234,6 +258,16 @@ function Conversation({ character }: { character: Character }) {
         <span className="avatar small">{character.avatar}</span>
         <span className="chat-room-name">{character.name}</span>
         <span className="chat-tools">
+          <button
+            type="button"
+            className="icon-btn"
+            title="总结记忆（把最近的聊天要点合进长期记忆）"
+            aria-label="总结记忆"
+            disabled={memoryBusy || generating || messages.length < 4}
+            onClick={() => void summarizeMemory()}
+          >
+            {memoryBusy ? "⏳" : "🧠"}
+          </button>
           <button
             type="button"
             className="icon-btn"
@@ -310,6 +344,40 @@ function Conversation({ character }: { character: Character }) {
           </button>
         )}
       </footer>
+
+      {memoryDraft !== null && (
+        <div className="modal-mask" onClick={() => setMemoryDraft(null)}>
+          <div className="modal-card" onClick={(event) => event.stopPropagation()}>
+            <h3 className="modal-title">🧠 总结记忆 · {character.name}</h3>
+            <p className="modal-hint">
+              AI 把最近的聊天要点合并成了这份长期记忆（原有记忆尽量保留）。可手动修改，保存后随设定一起注入提示词。
+            </p>
+            <textarea
+              className="modal-textarea"
+              rows={8}
+              value={memoryDraft}
+              onChange={(event) => setMemoryDraft(event.target.value)}
+            />
+            <div className="modal-actions">
+              <button
+                type="button"
+                className="primary"
+                disabled={!memoryDraft.trim()}
+                onClick={() => {
+                  updateCharacter(character.id, { memory: memoryDraft.trim() });
+                  setMemoryDraft(null);
+                  bus.emit("notify", { title: "记忆已更新", body: `${character.name} 会记得这些事` });
+                }}
+              >
+                保存记忆
+              </button>
+              <button type="button" className="secondary" onClick={() => setMemoryDraft(null)}>
+                取消
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

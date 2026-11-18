@@ -141,18 +141,59 @@ registerTheme({
   label: "樱花",
   mode: "light",
   vars: {
-    "--c-bg": "#fdf2f6",
-    "--c-surface": "#ffffff",
-    "--c-accent": "#e5679a",
-    "--c-bubble-user": "#e5679a",
-    "--home-wall": "linear-gradient(160deg, #ffe3ee, #fff7f9)",
-    // ……完整变量清单看 src/theme/themes.ts 内置主题
+    "c-bg": "#fdf2f6",
+    "c-surface": "#ffffff",
+    "c-accent": "#e5679a",
+    "c-bubble-user": "#e5679a",
+    "home-wall": "linear-gradient(160deg, #ffe3ee, #fff7f9)",
+    // ……完整变量清单看 src/theme/themes.ts 内置主题（键不带 -- 前缀）
   },
 });
 ```
 
 注册后设置 → 外观的切换列表自动出现。深色模式记得把 `mode` 设为 `"dark"`，
 状态栏等处的对比色会跟随 `data-theme-mode` 属性调整。
+
+### 主题包（JSON 导入导出）
+
+主题可序列化成 `purin.theme` JSON 分享：设置 → 外观里有导出/导入按钮；
+代码里用 `exportTheme(theme)` / `parseThemePack(json)`（`src/theme/themes.ts`）。
+
+```json
+{
+  "type": "purin.theme",
+  "version": 1,
+  "id": "sakura",
+  "label": "樱花",
+  "mode": "light",
+  "vars": { "c-bg": "#fdf2f6", "c-accent": "#e5679a", "...": "其余变量" }
+}
+```
+
+校验规则：`id` 合法（小写字母数字连字符）、`label` 非空、`mode` ∈ light/dark、
+`vars` 1~40 项且键匹配 `/^[a-z0-9][a-z0-9-]{1,29}$/`、值非空。不合规则抛
+「主题包格式不正确」。导入的主题只在当前会话生效（想常驻就照上面写进代码注册）。
+
+---
+
+## 3.5 给角色挂世界书
+
+世界书 = 背景知识库，条目按三种方式触发后注入提示词（`src/core/worldbook.ts`）：
+
+- **常驻（always）**：每次对话都注入（世界观类）；
+- **关键词（keyword）**：最近 8 条消息提到任一触发词才注入；
+- **正则（regex）**：最近消息匹配正则才注入（无效正则静默不触发）。
+
+每个条目有 `priority`（越大越靠前）和 `position`：`system` 拼进主提示词、
+`context` 作为「此刻的背景补充」插在最近一条用户消息前。挂载方式：角色编辑/
+世界书 App 里勾选；群聊取全体成员绑定书的**并集**。数据在
+`src/state/worldbookStore.ts`（persist key `purin.worldbooks`），绑定关系存在
+`Character.worldbookIds` / `Group.worldbookIds` 上，删书自动清理引用。
+
+交换格式两种：JSON（`{type:"purin.worldbook", version:1, entries:[...]}`）和
+纯文本（块间 `---` 分隔，块内 `@常驻` / `@关键词: a,b` / `@正则: x` /
+`@优先级: 10` / `@位置: 近对话` 指令行 + 正文），见 `parseWorldbookJson` /
+`parseWorldbookText`。
 
 ---
 
@@ -176,7 +217,9 @@ export interface PhoneEvents {
 创建一个私有总线，不污染系统事件表。
 
 > 角色卡格式提示：导入导出走 `src/state/charactersStore.ts` 的
-> `toCard()` / `parseCard()`，格式为 `{type:"purin.character", version:1, ...}`（导入兼容旧 `my-phone.character`），
+> `toCard()` / `parseCard()`，格式为 `{type:"purin.character", version:1, ...}`
+> （v1.1 可选字段 `firstMessage` 开场白、`exampleDialogue` 对话示例、`memory` 记忆种子；
+> 导入兼容旧 `my-phone.character`；另有 `parseCharacterText()` 支持 .txt/.md 标签式文本），
 > 想做角色卡生态时直接复用这个 Schema。
 
 ---

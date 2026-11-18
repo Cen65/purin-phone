@@ -15,13 +15,15 @@ export interface Group {
   name: string;
   /** 成员角色 id，按加入顺序轮流发言 */
   memberIds: string[];
+  /** 群绑定的世界书 id（注入时与成员绑定的书取并集） */
+  worldbookIds?: string[];
   createdAt: number;
 }
 
 interface GroupsState {
   groups: Group[];
   addGroup: (name: string, memberIds: string[]) => Group;
-  updateGroup: (id: string, patch: Partial<Pick<Group, "name" | "memberIds">>) => void;
+  updateGroup: (id: string, patch: Partial<Pick<Group, "name" | "memberIds" | "worldbookIds">>) => void;
   removeGroup: (id: string) => void;
 }
 

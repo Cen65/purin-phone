@@ -1588,3 +1588,209 @@ button.link-btn {
   font-size: 15px;
   cursor: pointer;
 }
+
+/* ===== 世界书 App ===== */
+.wb {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.wb-hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--c-text-dim);
+}
+.wb-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.wb-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--c-border);
+  border-radius: 14px;
+  background: var(--c-surface);
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+.wb-row:hover {
+  border-color: var(--c-accent);
+}
+.wb-row-icon {
+  font-size: 22px;
+}
+.wb-row-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.wb-row-name {
+  font-size: 15px;
+  font-weight: 600;
+}
+.wb-row-sub {
+  font-size: 12px;
+  color: var(--c-text-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wb-row-arrow {
+  color: var(--c-text-dim);
+}
+.wb-entries-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.wb-entries-actions {
+  display: flex;
+  gap: 8px;
+}
+.wb-entry {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--c-border);
+  border-radius: 12px;
+  background: var(--c-surface);
+  cursor: pointer;
+}
+.wb-entry:hover {
+  border-color: var(--c-accent);
+}
+.wb-entry-off {
+  opacity: 0.5;
+}
+.wb-entry-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.wb-entry-title {
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.wb-entry-tags {
+  font-size: 12px;
+  color: var(--c-accent);
+}
+.wb-entry-preview {
+  font-size: 12px;
+  color: var(--c-text-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wb-entry-actions {
+  display: flex;
+  gap: 6px;
+  font-size: 14px;
+}
+.wb-entry-actions button {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 15px;
+  padding: 2px 4px;
+}
+.wb-priority {
+  font-size: 11px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--c-accent-soft);
+  color: var(--c-accent);
+  font-weight: 600;
+}
+.wb-name-input {
+  flex: 1;
+  min-width: 0;
+}
+.wb-test-result {
+  margin: 0;
+  font-size: 13px;
+  color: var(--c-accent);
+}
+.wb-entry-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border: 1px dashed var(--c-accent);
+  border-radius: 14px;
+  background: var(--c-surface-2);
+}
+
+/* ===== 弹窗（记忆总结等） ===== */
+.modal-mask {
+  position: absolute;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgb(0 0 0 / 45%);
+}
+.modal-card {
+  width: 100%;
+  max-width: 340px;
+  max-height: 100%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  border-radius: 18px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  box-shadow: 0 18px 48px rgb(0 0 0 / 25%);
+}
+.modal-title {
+  margin: 0;
+  font-size: 16px;
+}
+.modal-hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--c-text-dim);
+  line-height: 1.5;
+}
+.modal-textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+.modal-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+/* ===== AI 捏人 ===== */
+.forge-title {
+  margin: 0;
+  font-size: 16px;
+}
+.forge-hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--c-text-dim);
+}
+.forge-error {
+  margin: 0;
+  font-size: 13px;
+  color: var(--c-danger);
+}
+

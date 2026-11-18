@@ -29,6 +29,8 @@ interface ChatState {
   failAssistant: (conversationId: string, messageId: string, error: string) => void;
   /** 直接插入一条已完成的消息（通话转写等非流式来源） */
   insertMessage: (conversationId: string, role: "user" | "assistant", content: string, speakerId?: string) => void;
+  /** 会话为空时插入开场白（原子检查，防 StrictMode 双跑；已有消息则忽略） */
+  ensureFirstMessage: (conversationId: string, content: string) => void;
   clearConversation: (conversationId: string) => void;
 }
 
@@ -107,6 +109,21 @@ export const useChatStore = create<ChatState>()(
           speakerId,
         };
         set((state) => ({ messages: append(state, conversationId, message) }));
+      },
+      ensureFirstMessage: (conversationId, content) => {
+        const text = content.trim();
+        if (!text) return;
+        set((state) => {
+          if ((state.messages[conversationId] ?? []).length > 0) return state;
+          const message: ChatMessage = {
+            id: uid(),
+            role: "assistant",
+            content: text,
+            createdAt: Date.now(),
+            status: "done",
+          };
+          return { messages: append(state, conversationId, message) };
+        });
       },
       clearConversation: (conversationId) =>
         set((state) => {

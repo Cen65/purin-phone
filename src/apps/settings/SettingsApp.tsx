@@ -3,8 +3,9 @@ import type { AppProps } from "../types";
 import { useSettingsStore } from "../../state/settingsStore";
 import { listProviders, getProvider } from "../../ai/providers";
 import { PROVIDER_PRESETS } from "../../ai/presets";
-import { getThemes } from "../../theme/themes";
+import { getThemes, getTheme, registerTheme, exportTheme, parseThemePack } from "../../theme/themes";
 import { ENTITLEMENT_STATUS_LABELS, getEntitlementProvider } from "../../core/entitlement";
+import { downloadTextFile } from "../../core/download";
 import { Section, Field } from "../ui";
 
 /**
@@ -28,6 +29,19 @@ export default function SettingsApp(_props: AppProps) {
   const [loadingModels, setLoadingModels] = useState(false);
   const [unbinding, setUnbinding] = useState(false);
   const [unbindMessage, setUnbindMessage] = useState<string | null>(null);
+  const [themeImport, setThemeImport] = useState("");
+  const [themeMessage, setThemeMessage] = useState<string | null>(null);
+
+  const applyImportedTheme = async () => {
+    try {
+      const pack = parseThemePack(themeImport);
+      registerTheme(pack);
+      setThemeId(pack.id);
+      setThemeMessage(`已应用主题「${pack.label}」（本次会话）`);
+    } catch (error) {
+      setThemeMessage(error instanceof Error ? error.message : String(error));
+    }
+  };
 
   const providers = listProviders();
   const themes = getThemes();
@@ -199,6 +213,37 @@ export default function SettingsApp(_props: AppProps) {
               </option>
             ))}
           </select>
+        </Field>
+        <Field label="导出当前主题" hint="导出为 JSON 主题包，可分享给别人导入">
+          <button
+            type="button"
+            className="secondary"
+            onClick={() => {
+              const theme = getTheme(themeId);
+              if (!theme) return;
+              downloadTextFile(
+                `${theme.id}.purin-theme.json`,
+                exportTheme(theme),
+                "application/json;charset=utf-8",
+              );
+            }}
+          >
+            导出主题包
+          </button>
+        </Field>
+        <Field label="导入主题包" hint="粘贴 purin-theme JSON，应用后立即生效（本次会话）">
+          <textarea
+            rows={3}
+            placeholder='{"type":"purin.theme","id":"my-theme",...}'
+            value={themeImport}
+            onChange={(event) => setThemeImport(event.target.value)}
+          />
+          <div className="editor-actions">
+            <button type="button" className="secondary" disabled={!themeImport.trim()} onClick={() => void applyImportedTheme()}>
+              应用主题
+            </button>
+          </div>
+          {themeMessage ? <p className="about-text">{themeMessage}</p> : null}
         </Field>
       </Section>
 

@@ -5,6 +5,8 @@ import { useSettingsStore, isApiReady } from "../state/settingsStore";
 import { useCharactersStore } from "../state/charactersStore";
 import { useChatStore } from "../state/chatStore";
 import { useGroupsStore, groupConversationId, livingMembers, type Group } from "../state/groupsStore";
+import { useWorldbookStore } from "../state/worldbookStore";
+import { collectWorldbookContext, scanTextOf, type WorldbookContext } from "../core/worldbook";
 import { usePhoneStore } from "../state/phoneStore";
 import { bus } from "../core/events";
 
@@ -34,6 +36,20 @@ function isAbortError(error: unknown): boolean {
 
 function resolveCharacter(characterId: string): Character | undefined {
   return useCharactersStore.getState().characters.find((c) => c.id === characterId);
+}
+
+/** 多路世界书绑定（角色自带 + 群自带）取并集，按最近消息算触发 */
+function worldbookContextFor(
+  bookIdLists: (string[] | undefined)[],
+  history: { content: string }[],
+): WorldbookContext {
+  const ids = new Set<string>();
+  for (const list of bookIdLists) {
+    for (const id of list ?? []) ids.add(id);
+  }
+  if (ids.size === 0) return { system: "", context: "" };
+  const books = useWorldbookStore.getState().books.filter((book) => ids.has(book.id));
+  return collectWorldbookContext(books, scanTextOf(history));
 }
 
 function requireApi(): boolean {
@@ -67,6 +83,7 @@ async function runAssistant(characterId: string): Promise<void> {
     persona: settings.persona,
     history: chat.messages[characterId] ?? [],
     windowSize: settings.windowSize,
+    worldbook: worldbookContextFor([character.worldbookIds], chat.messages[characterId] ?? []),
   });
 
   const controller = new AbortController();
@@ -136,13 +153,18 @@ async function runGroupAssistant(group: Group, character: Character): Promise<vo
   if (!provider) return;
 
   const members = livingMembers(group, useCharactersStore.getState().characters);
+  const history = useChatStore.getState().messages[conversationId] ?? [];
   const messages = buildGroupMessages({
     character,
     group,
     members,
     persona: settings.persona,
-    history: useChatStore.getState().messages[conversationId] ?? [],
+    history,
     windowSize: settings.windowSize,
+    worldbook: worldbookContextFor(
+      [group.worldbookIds, ...members.map((member) => member.worldbookIds)],
+      history,
+    ),
   });
 
   const controller = new AbortController();

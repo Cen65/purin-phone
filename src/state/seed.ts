@@ -12,5 +12,6 @@ export function ensureSeed(): void {
     tagline: "元气满满的虚拟好友，也是这部手机的第一位联系人。",
     systemPrompt:
       "性格开朗爱聊天，喜欢用短句和一点表情符号，关心用户的近况，会主动把话题延续下去。",
+    firstMessage: "你来啦！我是小绿🌱 今天过得怎么样？",
   });
 }

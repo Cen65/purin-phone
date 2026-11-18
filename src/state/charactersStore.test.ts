@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { toCard, parseCard } from "./charactersStore";
+import { toCard, parseCard, parseCharacterText } from "./charactersStore";
 import type { Character } from "../types";
 
 const character: Character = {
@@ -60,5 +60,46 @@ describe("角色卡", () => {
     expect(() => parseCard(JSON.stringify({ type: "other.card", version: 1, name: "x", avatar: "🙂", tagline: "", systemPrompt: "" }))).toThrow(
       "角色卡格式不正确",
     );
+  });
+
+  it("v1.1 新字段 firstMessage / exampleDialogue 随卡往返（缺省时省略）", () => {
+    const card = toCard({ ...character, firstMessage: "你来啦", exampleDialogue: "用户：在吗\n阿茶：嗯" });
+    expect(card.firstMessage).toBe("你来啦");
+    const draft = parseCard(JSON.stringify(card));
+    expect(draft.firstMessage).toBe("你来啦");
+    expect(draft.exampleDialogue).toBe("用户：在吗\n阿茶：嗯");
+    // 无新字段的旧卡（v1）导入不带这两项
+    const legacy = parseCard(
+      JSON.stringify({ type: "purin.character", version: 1, name: "旧", avatar: "🙂", tagline: "", systemPrompt: "" }),
+    );
+    expect(legacy.firstMessage).toBeUndefined();
+    expect(legacy.exampleDialogue).toBeUndefined();
+  });
+});
+
+describe("parseCharacterText 纯文本导入（P3）", () => {
+  it("首行为名字 + 字段行解析 + 续行并入 + 未知行进设定", () => {
+    const draft = parseCharacterText(
+      ["# 布丁", "头像：🍮", "简介：甜品的化身", "设定：外冷内热。", "其实很粘人。", "怪脾气：别提。", "开场白：你来啦？"].join("\n"),
+    );
+    expect(draft.name).toBe("布丁");
+    expect(draft.avatar).toBe("🍮");
+    expect(draft.tagline).toBe("甜品的化身");
+    expect(draft.systemPrompt).toBe("外冷内热。\n其实很粘人。\n怪脾气：别提。");
+    expect(draft.firstMessage).toBe("你来啦？");
+  });
+
+  it("「名字：xxx」式首行与「对话示例」字段", () => {
+    const draft = parseCharacterText(
+      ["名字：小绿", "对话示例：用户：hi", "小绿：hello"].join("\n"),
+    );
+    expect(draft.name).toBe("小绿");
+    expect(draft.exampleDialogue).toBe("用户：hi\n小绿：hello");
+  });
+
+  it("全空文本回退「未命名角色」+ 默认头像", () => {
+    const draft = parseCharacterText("");
+    expect(draft.name).toBe("未命名角色");
+    expect(draft.avatar).toBe("🙂");
   });
 });

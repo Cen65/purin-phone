@@ -4,6 +4,7 @@ import ContactsApp from "./contacts/ContactsApp";
 import MomentsApp from "./moments/MomentsApp";
 import NotesApp from "./notes/NotesApp";
 import SettingsApp from "./settings/SettingsApp";
+import WorldbookApp from "./worldbook/WorldbookApp";
 
 /**
  * 内置 App 注册。第三方/实验性 App 未来在这里追加 registerApp 即可上桌面。
@@ -13,7 +14,7 @@ export function registerBuiltinApps(): void {
     id: "chat",
     name: "聊天",
     icon: "💬",
-    version: "0.2.0",
+    version: "0.3.0",
     description: "和 AI 角色私聊、群聊",
     category: "social",
     order: 10,
@@ -23,11 +24,21 @@ export function registerBuiltinApps(): void {
     id: "contacts",
     name: "联系人",
     icon: "👥",
-    version: "0.2.0",
-    description: "管理你的 AI 角色，支持角色卡",
+    version: "0.3.0",
+    description: "管理你的 AI 角色，支持角色卡与 AI 捏人",
     category: "social",
     order: 20,
     component: ContactsApp,
+  });
+  registerApp({
+    id: "worldbook",
+    name: "世界书",
+    icon: "📖",
+    version: "0.1.0",
+    description: "给角色挂载背景知识库",
+    category: "tools",
+    order: 35,
+    component: WorldbookApp,
   });
   registerApp({
     id: "moments",

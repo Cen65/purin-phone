@@ -35,6 +35,21 @@ describe("chatStore 流式生命周期", () => {
     useChatStore.getState().clearConversation("conv-3");
     expect(useChatStore.getState().messages["conv-3"]).toBeUndefined();
   });
+
+  it("ensureFirstMessage 空会话插开场白、非空不动（P3）", () => {
+    useChatStore.getState().clearConversation("conv-4");
+    useChatStore.getState().ensureFirstMessage("conv-4", "你来啦！");
+    useChatStore.getState().ensureFirstMessage("conv-4", "第二次调用应被忽略");
+    let messages = useChatStore.getState().messages["conv-4"] ?? [];
+    expect(messages).toHaveLength(1);
+    expect(messages[0]).toMatchObject({ role: "assistant", content: "你来啦！", status: "done" });
+
+    useChatStore.getState().addUserMessage("conv-4", "在吗");
+    useChatStore.getState().ensureFirstMessage("conv-4", "不应覆盖");
+    messages = useChatStore.getState().messages["conv-4"] ?? [];
+    expect(messages).toHaveLength(2);
+    expect(messages[1]).toMatchObject({ role: "user", content: "在吗" });
+  });
 });
 
 describe("phoneStore 导航与角标", () => {
