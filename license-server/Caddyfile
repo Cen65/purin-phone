@@ -1,0 +1,4 @@
+# 换成你的域名（DNS A 记录指向服务器 IP），Caddy 自动签发 Let's Encrypt 证书
+license.example.com {
+	reverse_proxy license:3000
+}

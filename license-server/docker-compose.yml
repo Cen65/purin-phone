@@ -1,0 +1,35 @@
+name: license-server
+
+services:
+  license:
+    build: .
+    restart: unless-stopped
+    environment:
+      # 改成你自己的管理密码（后台登录用）
+      ADMIN_PASSWORD: change-me-please
+      # 首次启动自动申请 HTTPS 证书，改域名后 docker compose up -d 即可
+      # PORT: 3000
+      # DATA_DIR: data
+      # DB_FILE: license.db
+    volumes:
+      - license-data:/app/data
+    expose:
+      - "3000"
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - license
+
+volumes:
+  license-data:
+  caddy-data:
+  caddy-config:

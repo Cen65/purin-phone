@@ -1,0 +1,111 @@
+# Purin · 布丁机
+
+一个跑在浏览器里的"手机"：桌面、App、通知、主题一应俱全，里面的角色由任意
+OpenAI 兼容 API（OpenAI / DeepSeek / 硅基流动 / Ollama / LM Studio …）驱动。
+纯前端项目，无后端、无数据库，数据全部留在本地浏览器。
+
+## 快速开始
+
+```bash
+cd purin
+pnpm install --ignore-workspace   # 位于 pnpm workspace 子目录时必须带此参数
+pnpm dev                          # http://127.0.0.1:5188
+```
+
+打开设置 App → 填入任意 OpenAI 兼容服务的 BaseURL / API Key / 模型名 →
+回到聊天，和预置角色"小绿"开始对话。
+
+```bash
+pnpm build    # 类型检查 + 产物构建（dist/）
+pnpm test     # 单元测试（vitest，进程内 threads 池）
+pnpm preview  # 预览构建产物
+```
+
+## 已具备的能力
+
+| 能力 | 说明 |
+| --- | --- |
+| 手机系统 | 状态栏（时钟/通知/锁屏）/ 桌面网格 / Dock / 底部导航 / 通知 Toast / 应用错误隔离 |
+| App 注册表 | `registerApp()` 动态注册，内置：聊天 💬、联系人 👥、朋友圈 🌟、便签 📝、设置 ⚙️ |
+| AI 对话 | OpenAI 兼容 /chat/completions，SSE 流式输出，失败气泡内一键重新生成，**生成中可停止** |
+| Markdown | AI 回复渲染粗体/斜体/行内码/代码块/链接/引用（零依赖、转义优先防注入） |
+| 群聊 | 多角色会话：成员按序回复、单人失败不拦后续、气泡带发言人头像 |
+| 角色卡 | JSON 导入导出（`purin.character` 格式，兼容导入旧 `my-phone.character`），长期记忆字段注入提示词 |
+| 朋友圈 | 手动发帖 + AI 角色随机生成动态，点赞 / 评论 / #话题 |
+| 模拟来电 | 联系人拨号 → 全屏通话（接听/拒接/快捷语/计时），挂断自动转写进聊天 |
+| 通知中心 | 🔔 下拉收件箱（最近 20 条）、未读角标、点击跳转；锁屏大时钟 |
+| 深链路由 | `#/app/{id}?{params}` hash 同步，刷新还原、浏览器前进/后退 |
+| 多服务商 | Provider 抽象 + 注册表；常用预设一键填入（DeepSeek/OpenAI/Kimi/硅基流动/OpenRouter/Ollama） |
+| 主题 | CSS 变量主题系统，内置清白 / 夜色 / 抹茶三套，可编程扩展 |
+| 持久化 | zustand persist + localStorage 适配层（未来无痛换 IndexedDB） |
+| 事件总线 | 类型化事件解耦：聊天完成 → 通知 → 角标，App 之间零直接依赖 |
+| 商用接缝 | entitlement 授权抽象层：默认开放模式，可整体替换为激活码/账号服务器（[docs/COMMERCIAL-DESIGN.md](docs/COMMERCIAL-DESIGN.md)） |
+| 测试 | 68 个单测覆盖注册表 / SSE 解析 / 提示词组装 / 聊天状态机 / 群聊执行器 / 授权接缝 / 朋友圈 / 通话 |
+
+## 架构一览
+
+```
+┌─────────────────────────────── PhoneShell ───────────────────────────────┐
+│ StatusBar 🔔🔒  NotificationHost  HomeScreen/AppHost  NavBar  CallHost  │
+│ LockScreen（locked 时盖全屏）      NotificationPanel（🔔 下拉）          │
+├──────────────────────────── apps（可插拔） ───────────────────────────────┤
+│ chat 💬  contacts 👥  moments 🌟  notes 📝  settings ⚙️  ← registerApp() │
+├──────────────────────────── state（全局状态） ───────────────────────────┤
+│ phoneStore  settingsStore  charactersStore  chatStore（persist 持久化）  │
+│ groupsStore  momentsStore（persist）  notifications  call（会话级）      │
+├──────────────────────────── ai（服务商抽象） ────────────────────────────┤
+│ providers 注册表 → openaiCompatible（SSE） · presets · prompt(1v1/群/圈/ │
+│ 通话) · chatRunner(停止/群聊轮次) · creative(朋友圈/通话回复)            │
+├──────────────────────────── core / theme（地基） ────────────────────────┤
+│ events 总线 · id · storage 适配层 · md 渲染 · deeplink · themes          │
+└──────────────────────────────────────────────────────────────────────────┘
+```
+
+分层规则：`core/theme` 不依赖任何上层；`ai` 与 `state` 只依赖 `core`；
+`apps` 只依赖 `ai`/`state` 的公开 API 与事件总线，**App 之间禁止互相 import**。
+
+## 目录结构
+
+```
+purin/
+├─ docs/
+│  ├─ PLAN.md               # 分阶段发展计划（P0 底座 → P5 商用化；P1/P2 已完成）
+│  ├─ EXTENDING.md          # 扩展指南：新增 App / Provider / 主题 / 事件 / 授权
+│  └─ COMMERCIAL-DESIGN.md  # 商用设计：激活码 + 设备绑定 + 管理后台
+├─ public/
+│  └─ commercial.json       # 商用开关：open=单机版 / licensed=激活码模式
+├─ src/
+│  ├─ ai/            # Provider 抽象、openai-compatible、预设、提示词(1v1/群/圈/通话)、运行器、创意生成
+│  ├─ apps/          # App 注册表 + 内置 App（chat/contacts/moments/notes/settings）
+│  ├─ core/          # 事件总线、id、存储适配、md 渲染、deeplink、下载、授权接缝、商用配置
+│  ├─ phone/         # 手机壳（状态栏/锁屏/通知面板/通话层/激活门，不含业务）
+│  ├─ state/         # zustand store（settings/characters/chat/groups/moments/phone/notifications/call）
+│  ├─ styles/        # global.css（全部样式，CSS 变量驱动）
+│  └─ theme/         # 主题定义与注册
+└─ license-server/   # 可选的激活码授权服务器（商用时才部署，见其 README）
+```
+
+## 商用开关
+
+`public/commercial.json`（构建后可直接改文件，无需重新构建）：
+
+```jsonc
+{ "mode": "open", "licenseServer": "" }        // 单机版：不连任何服务器，全功能开放（默认）
+{ "mode": "licensed", "licenseServer": "https://你的域名" }  // 商用版：启动要求激活码，一码绑一设备
+```
+
+商用模式需要先部署 `license-server/`（Node ≥ 23 + SQLite，零运行时依赖，Docker 一键起），
+后台在 `https://你的域名/admin`：生成激活码 → 线下收款 → 发码给买家 → 买家激活即绑定设备。
+完整流程见 [docs/COMMERCIAL-DESIGN.md](docs/COMMERCIAL-DESIGN.md) 与
+[license-server/README.md](license-server/README.md)。
+
+## 扩展
+
+看 [docs/EXTENDING.md](docs/EXTENDING.md)：三十行代码新增一个 App，
+一个对象新增一个服务商，一组 CSS 变量新增一套主题。
+
+## 授权与致谢
+
+- 本项目代码为**原创实现**，仅借鉴"浏览器模拟手机 + AI 角色 + 可扩展 App"
+  这一通用产品概念，未复制任何第三方项目的代码、文案或美术资源。
+- 本项目自身的授权由你决定（建议在正式发布前选定 MIT / Apache-2.0 等）。
