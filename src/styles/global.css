@@ -2245,6 +2245,12 @@ input[type="range"] {
 
 /* ===== 视觉系统（方案A：磁贴/滚动条/动效） ===== */
 
+/* Netlify 免费套餐右下角徽标（nl-badge-frame iframe）：兜底隐藏 */
+#nl-badge-frame,
+#nl-hud-frame {
+  display: none !important;
+}
+
 /* App 渐变磁贴本体：HomeScreen 网格、Dock、标题栏共用 */
 .app-tile {
   position: relative;

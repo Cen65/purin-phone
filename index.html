@@ -12,6 +12,23 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Purin" />
     <title>Purin</title>
+    <script>
+      // 拦截 Netlify 免费套餐注入的右下角徽标脚本（HUD 在 HTML 响应末尾被追加）
+      (function () {
+        var kill = function (node) {
+          if (node && node.nodeType === 1 && node.tagName === "SCRIPT") {
+            var src = node.getAttribute && node.getAttribute("src");
+            if (src && src.indexOf("/.netlify/scripts/hud") === 0) node.remove();
+          }
+        };
+        new MutationObserver(function (records) {
+          for (var i = 0; i < records.length; i++) {
+            var added = records[i].addedNodes;
+            for (var j = 0; j < added.length; j++) kill(added[j]);
+          }
+        }).observe(document.documentElement, { childNodes: true, subtree: true });
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
