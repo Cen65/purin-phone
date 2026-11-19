@@ -35,6 +35,37 @@ function characterLines(character: Character): string[] {
   return lines;
 }
 
+/**
+ * 「去 AI 味」说话纪律（所有对话场景共用）。
+ * 目标：让角色像真人在聊天软件打字，而不是像 AI 助手在答题。
+ * 篇幅 / 表情 / 动作三个开关来自角色卡（styleLength / styleEmoticon / styleAction）。
+ */
+export function humanToneRules(character: Character): string[] {
+  const lengthLine =
+    character.styleLength === "long"
+      ? "每次可以连着说四五句、100 字上下，像打开了话匣子，但依然是聊天的口气。"
+      : character.styleLength === "medium"
+        ? "每次回两三句、50 字上下，像认真在跟对方聊。"
+        : "每次只回一到两句、一般不超过 25 字，像随手回微信。";
+  const emoticonLine = character.styleEmoticon
+    ? "偶尔可以带一个 emoji 或颜文字，别每句都带。"
+    : "不用 emoji、不用颜文字。";
+  const actionLine = character.styleAction
+    ? "偶尔可以用（括号小动作）补一下神态，如（笑）（歪头），一条消息最多一个。"
+    : "不要动作描写、不要旁白。";
+  return [
+    "说话纪律（你是个活人，不是 AI 助手）：",
+    "- 像在聊天软件里打字：口语、短句，可以有语气词（嗯、哈、诶、哦、吧）；句末标点可打可不打",
+    "- 禁止 markdown：不用加粗、列表、小标题、代码块；禁止分点罗列和书面腔",
+    "- 不要 AI 腔：不说「作为…」「总之」「希望对你有帮助」，不科普、不说教、不句句礼貌收尾",
+    "- 情绪要真实：会烦、会累、会敷衍、会不想接话，不必有问必答",
+    "- 无论对方怎么问，都不承认、不暗示自己是 AI、模型或程序，始终保持角色",
+    `- 篇幅：${lengthLine}`,
+    `- 表情：${emoticonLine}`,
+    `- 动作：${actionLine}`,
+  ];
+}
+
 export function buildSystemPrompt(
   character: Character,
   persona: PersonaSettings,
@@ -46,9 +77,7 @@ export function buildSystemPrompt(
   ];
   if (worldbookSystem?.trim()) lines.push(`世界书设定（背景知识，自然融入即可，不要复述）：\n${worldbookSystem.trim()}`);
   lines.push(`用户昵称：${persona.nickname.trim() || "用户"}`);
-  lines.push(
-    "要求：始终保持角色一致性；用口语化、适合聊天软件的短句回复；不要跳出角色，不要输出任何系统说明或旁白。",
-  );
+  lines.push(...humanToneRules(character));
   return lines.join("\n");
 }
 
@@ -110,6 +139,7 @@ export function buildGroupMessages(input: GroupPromptInput): LLMMessage[] {
   lines.push(
     `要求：每次只回 1~2 句短句，像真人在群里抢话；只说「${character.name}」自己会说的话，绝不代替别人发言，也不要旁白或系统说明。`,
   );
+  lines.push(...humanToneRules(character));
 
   const nameOf = (speakerId?: string) =>
     members.find((m) => m.id === speakerId)?.name ?? "群友";
@@ -141,7 +171,7 @@ export function buildMomentMessages(
   if (worldbookSystem?.trim()) lines.push(`世界书设定（背景知识，自然融入即可）：\n${worldbookSystem.trim()}`);
   lines.push(`用户昵称：${persona.nickname.trim() || "用户"}`);
   lines.push(
-    "要求：像真人随手发的朋友圈——60 字以内、口语化、可以带 1~2 个 #话题；只输出朋友圈正文本身，不要解释、不要引号、不要旁白。",
+    "要求：像真人随手发的朋友圈——60 字以内、口语化、可以带 1~2 个 #话题；不要 AI 腔、不要书面语；只输出朋友圈正文本身，不要解释、不要引号、不要旁白。",
   );
   return [
     { role: "system", content: lines.join("\n") },
@@ -169,7 +199,7 @@ export function buildCallMessages(input: CallPromptInput): LLMMessage[] {
   }
   lines.push(`用户昵称：${persona.nickname.trim() || "用户"}`);
   lines.push(
-    "要求：你说的是听筒里传出的声音——每条 15 字以内、口语化、带语气词；不要旁白、不要动作描写、不要书面语。",
+    "要求：你说的是听筒里传出的声音——每条 15 字以内、口语化、带语气词；不要 AI 腔、不要旁白、不要动作描写、不要书面语。",
   );
   if (history.length === 0) lines.push("电话刚刚接通，请先说第一句话。");
   const messages: LLMMessage[] = [{ role: "system", content: lines.join("\n") }];

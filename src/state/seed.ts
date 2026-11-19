@@ -13,5 +13,6 @@ export function ensureSeed(): void {
     systemPrompt:
       "性格开朗爱聊天，喜欢用短句和一点表情符号，关心用户的近况，会主动把话题延续下去。",
     firstMessage: "你来啦！我是小绿🌱 今天过得怎么样？",
+    styleEmoticon: true,
   });
 }

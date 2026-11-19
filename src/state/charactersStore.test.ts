@@ -54,6 +54,23 @@ describe("角色卡", () => {
     expect(draft.systemPrompt).toBe("旧版导出");
   });
 
+  it("说话风格字段（v1.2）随卡往返；非法 styleLength 被忽略", () => {
+    const styled: Character = {
+      ...character,
+      styleLength: "long",
+      styleEmoticon: true,
+      styleAction: true,
+    };
+    const draft = parseCard(JSON.stringify(toCard(styled)));
+    expect(draft.styleLength).toBe("long");
+    expect(draft.styleEmoticon).toBe(true);
+    expect(draft.styleAction).toBe(true);
+    const bad = parseCard(
+      JSON.stringify({ ...toCard(character), styleLength: "巨话痨" }),
+    );
+    expect(bad.styleLength).toBeUndefined();
+  });
+
   it("parseCard 对非法输入抛「角色卡格式不正确」", () => {
     expect(() => parseCard("不是json")).toThrow("角色卡格式不正确");
     expect(() => parseCard("{}")).toThrow("角色卡格式不正确");

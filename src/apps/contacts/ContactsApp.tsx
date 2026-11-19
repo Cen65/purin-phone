@@ -163,6 +163,9 @@ function CharacterEditor({ characterId, onDone }: { characterId: string | null; 
     memory: character?.memory ?? "",
     firstMessage: character?.firstMessage ?? "",
     exampleDialogue: character?.exampleDialogue ?? "",
+    styleLength: character?.styleLength ?? "short",
+    styleEmoticon: character?.styleEmoticon ?? false,
+    styleAction: character?.styleAction ?? false,
     proactiveEnabled: character?.proactiveEnabled !== false,
     sleepFrom: character?.sleepFrom ?? "",
     sleepTo: character?.sleepTo ?? "",
@@ -248,6 +251,36 @@ function CharacterEditor({ characterId, onDone }: { characterId: string | null; 
           placeholder={"用户：在忙吗？\n角色：在等你消息呢，说吧。"}
           onChange={(event) => setDraft({ ...draft, exampleDialogue: event.target.value })}
         />
+      </label>
+      <label className="field">
+        <span className="field-label">说话风格（让 TA 更像真人，少些 AI 味）</span>
+        <div className="inline-row">
+          <select
+            value={draft.styleLength ?? "short"}
+            onChange={(event) =>
+              setDraft({ ...draft, styleLength: event.target.value as CharacterDraft["styleLength"] })
+            }
+          >
+            <option value="short">话少（一两句，像随手回微信）</option>
+            <option value="medium">适中（两三句）</option>
+            <option value="long">话多（四五句）</option>
+          </select>
+          <button
+            type="button"
+            className="secondary"
+            onClick={() => setDraft({ ...draft, styleEmoticon: !draft.styleEmoticon })}
+          >
+            {draft.styleEmoticon ? "表情 😊 开" : "表情 😊 关"}
+          </button>
+          <button
+            type="button"
+            className="secondary"
+            onClick={() => setDraft({ ...draft, styleAction: !draft.styleAction })}
+          >
+            {draft.styleAction ? "（小动作）开" : "（小动作）关"}
+          </button>
+        </div>
+        <span className="field-hint">禁 markdown、禁说教、不承认自己是 AI——这些纪律默认已开启。</span>
       </label>
       <label className="field">
         <span className="field-label">主动消息（角色会自己找话题给你发消息）</span>

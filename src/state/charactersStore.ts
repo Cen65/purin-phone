@@ -25,6 +25,12 @@ export interface CharacterCard {
   memory?: string;
   firstMessage?: string;
   exampleDialogue?: string;
+  /** 说话篇幅（v1.2 可选，缺省 = short） */
+  styleLength?: "short" | "medium" | "long";
+  /** 允许偶尔 emoji / 颜文字 */
+  styleEmoticon?: boolean;
+  /** 允许偶尔（括号小动作） */
+  styleAction?: boolean;
 }
 
 /** 导出为角色卡（文件内容由调用方下载，见 core/download.ts） */
@@ -40,6 +46,9 @@ export function toCard(character: Character): CharacterCard {
   if (character.memory?.trim()) card.memory = character.memory.trim();
   if (character.firstMessage?.trim()) card.firstMessage = character.firstMessage.trim();
   if (character.exampleDialogue?.trim()) card.exampleDialogue = character.exampleDialogue.trim();
+  if (character.styleLength) card.styleLength = character.styleLength;
+  if (character.styleEmoticon === true) card.styleEmoticon = true;
+  if (character.styleAction === true) card.styleAction = true;
   return card;
 }
 
@@ -74,6 +83,11 @@ export function parseCard(json: string): CharacterDraft {
   if (typeof card.exampleDialogue === "string" && card.exampleDialogue.trim()) {
     draft.exampleDialogue = card.exampleDialogue.trim();
   }
+  if (card.styleLength === "short" || card.styleLength === "medium" || card.styleLength === "long") {
+    draft.styleLength = card.styleLength;
+  }
+  if (card.styleEmoticon === true) draft.styleEmoticon = true;
+  if (card.styleAction === true) draft.styleAction = true;
   return draft;
 }
 

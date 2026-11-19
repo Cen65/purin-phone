@@ -23,6 +23,12 @@ export interface Character {
   sleepFrom?: string;
   /** 作息·起床时间 HH:mm */
   sleepTo?: string;
+  /** 说话篇幅：short（默认，一两句）| medium（两三句）| long（四五句） */
+  styleLength?: "short" | "medium" | "long";
+  /** 允许偶尔使用 emoji / 颜文字（默认不用） */
+  styleEmoticon?: boolean;
+  /** 允许偶尔使用（括号小动作）神态描写（默认不用） */
+  styleAction?: boolean;
   createdAt: number;
 }
 

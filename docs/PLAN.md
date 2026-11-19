@@ -23,6 +23,7 @@
 - [x] 会话管理：清空会话、导出聊天记录 txt；群聊会话（新建/成员选择）✅（重命名、置顶留待 P3）
 - [x] 消息操作：重新生成（单聊）、错误消息就地重试 ✅（编辑/删除单条留待）
 - [x] Markdown 渲染：`src/core/md.ts` 零依赖实现（转义优先防注入；粗斜体/行内码/围栏码块/链接/引用）✅（未引入 marked/shiki，够用且无依赖）
+- [x] 去 AI 味（2026-11）：`humanToneRules` 统一说话纪律注入 单聊/群聊/主动消息（朋友圈/通话提示词同步收紧）——短句口语、禁 markdown/说教/AI 腔、不承认自己是 AI、情绪真实；角色卡 v1.2 新增 篇幅(styleLength)/emoji(styleEmoticon)/（小动作）(styleAction) 三开关 ✅
 - [x] 常用服务商预设：DeepSeek / OpenAI / Kimi / 硅基流动 / OpenRouter / Ollama 一键填 BaseURL ✅
 - [x] 角色卡导入导出：`{type:"purin.character", version:1}` JSON（导入兼容旧 `my-phone.character`），通讯录导入/导出按钮 ✅
 - [x] 上下文策略可调：窗口条数设置（10/20/40/80），空消息过滤 ✅（system 模板化留待）

@@ -2,6 +2,7 @@ import type { LLMMessage } from "./types";
 import type { Character } from "../types";
 import type { ChatMessage } from "../state/chatStore";
 import { chatOnce } from "./creative";
+import { humanToneRules } from "./prompt";
 import { useSettingsStore, isApiReady, type PersonaSettings } from "../state/settingsStore";
 import { useProactiveStore } from "../state/proactiveStore";
 import { useCharactersStore } from "../state/charactersStore";
@@ -124,6 +125,7 @@ export function buildProactiveMessages(input: {
         ? `你主动给${me}发来了第一条消息。`
         : `距离你们上次聊天大约过去了 ${since} 小时，你此刻自发地想找${me}说点什么。`),
   );
+  lines.push(...humanToneRules(character));
   lines.push(
     `只输出这一条消息本身（15~60 字）：像随手发的微信，符合你的性格；可以分享心情、发发牢骚、问问${me}在干嘛，或接着之前的话题。不要旁白、不要引号、不要解释你在做什么。`,
   );

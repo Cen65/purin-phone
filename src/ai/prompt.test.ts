@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildSystemPrompt, buildMessages, buildGroupMessages } from "./prompt";
+import { buildSystemPrompt, buildMessages, buildGroupMessages, humanToneRules } from "./prompt";
 import type { Character } from "../types";
 import type { ChatMessage } from "../state/chatStore";
 
@@ -107,6 +107,44 @@ describe("buildGroupMessages 群聊映射（P1）", () => {
       history: [{ id: "1", role: "user", content: "hi", createdAt: 1, status: "done" }],
     });
     expect(messages[1]?.content).toBe("我：hi");
+  });
+});
+
+describe("说话纪律（去 AI 味）", () => {
+  it("默认注入反 AI 纪律：短句、禁 markdown、不承认是 AI、不用表情、无动作", () => {
+    const rules = humanToneRules(character).join("\n");
+    expect(rules).toContain("不是 AI 助手");
+    expect(rules).toContain("禁止 markdown");
+    expect(rules).toContain("不承认、不暗示自己是 AI");
+    expect(rules).toContain("不超过 25 字");
+    expect(rules).toContain("不用 emoji");
+    expect(rules).toContain("不要动作描写");
+  });
+
+  it("风格开关生效：long 篇幅、表情开、（小动作）开", () => {
+    const rules = humanToneRules({
+      ...character,
+      styleLength: "long",
+      styleEmoticon: true,
+      styleAction: true,
+    }).join("\n");
+    expect(rules).toContain("四五句");
+    expect(rules).not.toContain("不超过 25 字");
+    expect(rules).toContain("偶尔可以带一个 emoji");
+    expect(rules).toContain("（括号小动作）");
+  });
+
+  it("单聊与群聊 system 都包含说话纪律", () => {
+    const one = buildSystemPrompt(character, { nickname: "" });
+    expect(one).toContain("说话纪律");
+    const group = buildGroupMessages({
+      character: { ...character, id: "a" },
+      group: { name: "g" },
+      members: [{ ...character, id: "a" }],
+      persona: { nickname: "" },
+      history: [],
+    });
+    expect(group[0]?.content).toContain("说话纪律");
   });
 });
 
