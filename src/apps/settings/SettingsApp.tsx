@@ -8,6 +8,7 @@ import { ENTITLEMENT_STATUS_LABELS, getEntitlementProvider } from "../../core/en
 import { downloadTextFile } from "../../core/download";
 import { downloadBackup, restoreBackup } from "../../core/backup";
 import { speak, ttsSupported } from "../../core/tts";
+import { useProactiveStore } from "../../state/proactiveStore";
 import { Section, Field } from "../ui";
 
 /**
@@ -21,6 +22,10 @@ export default function SettingsApp(_props: AppProps) {
   const windowSize = useSettingsStore((s) => s.windowSize);
   const imageModel = useSettingsStore((s) => s.imageModel);
   const voiceAutoSpeak = useSettingsStore((s) => s.voiceAutoSpeak);
+  const engineOn = useProactiveStore((s) => s.engineOn);
+  const gapMinutes = useProactiveStore((s) => s.gapMinutes);
+  const setEngineOn = useProactiveStore((s) => s.setEngineOn);
+  const setGapMinutes = useProactiveStore((s) => s.setGapMinutes);
   const setApi = useSettingsStore((s) => s.setApi);
   const setPersona = useSettingsStore((s) => s.setPersona);
   const setThemeId = useSettingsStore((s) => s.setThemeId);
@@ -211,6 +216,20 @@ export default function SettingsApp(_props: AppProps) {
       </Section>
 
       <Section title="聊天">
+        <Field label="主动消息" hint="角色会自己找话题给你发消息（应用打开期间）；每个角色的开关在联系人编辑页">
+          <div className="inline-row">
+            <button type="button" className="secondary" onClick={() => setEngineOn(!engineOn)}>
+              {engineOn ? "已开启（点击关闭）" : "已关闭（点击开启）"}
+            </button>
+            <select value={gapMinutes} onChange={(event) => setGapMinutes(Number(event.target.value))}>
+              {[60, 120, 240, 480].map((minutes) => (
+                <option key={minutes} value={minutes}>
+                  间隔约 {minutes < 60 ? `${minutes} 分钟` : minutes < 1440 ? `${minutes / 60} 小时` : "1 天"}
+                </option>
+              ))}
+            </select>
+          </div>
+        </Field>
         <Field label="上下文条数" hint="每次请求带给 AI 的最近消息条数；更省额度调小，更记得住前文调大">
           <select value={windowSize} onChange={(event) => setWindowSize(Number(event.target.value))}>
             {[10, 20, 40, 80].map((size) => (

@@ -17,6 +17,12 @@ export interface Character {
   exampleDialogue?: string;
   /** 绑定的世界书 id 列表（背景知识注入，见 core/worldbook.ts） */
   worldbookIds?: string[];
+  /** 主动消息：角色是否会主动发消息找你（默认开启，见 ai/proactive.ts） */
+  proactiveEnabled?: boolean;
+  /** 作息·入睡时间 HH:mm（区间内不发主动消息；留空 = 全天可发） */
+  sleepFrom?: string;
+  /** 作息·起床时间 HH:mm */
+  sleepTo?: string;
   createdAt: number;
 }
 

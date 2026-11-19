@@ -34,6 +34,7 @@ pnpm preview  # 预览构建产物
 | 角色卡 | JSON 导入导出（`purin.character` v1.1，含开场白/对话示例，兼容旧 `my-phone.character`）；.txt/.md 标签式导入；✨ AI 捏人向导 |
 | 世界书 | 背景知识库：条目 常驻/关键词/正则 触发 + 优先级 + 插入位置，挂角色或群（成员取并集），JSON/txt 导入导出 + 触发测试器 |
 | 记忆 | 每角色长期记忆注入提示词；聊天页 🧠 一键让 AI 总结合并最近对话（弹窗确认后保存） |
+| 主动消息 | 角色自己找话题给你发消息（间隔+随机抖动节奏）；角色级开关与作息（睡眠时段不打扰）、全局开关与频率可调；应用打开期间运行 |
 | 朋友圈 | 手动发帖 + AI 角色随机生成动态，点赞 / 评论 / #话题 |
 | 模拟来电 | 联系人拨号 → 全屏通话（接听/拒接/快捷语/计时），挂断自动转写进聊天 |
 | 通知中心 | 🔔 下拉收件箱（最近 20 条）、未读角标、点击跳转；锁屏大时钟 |
@@ -47,7 +48,7 @@ pnpm preview  # 预览构建产物
 | 持久化 | zustand persist + localStorage 适配层（未来无痛换 IndexedDB） |
 | 事件总线 | 类型化事件解耦：聊天完成 → 通知 → 角标，App 之间零直接依赖 |
 | 商用接缝 | entitlement 授权抽象层：默认开放模式，可整体替换为激活码/账号服务器（[docs/COMMERCIAL-DESIGN.md](docs/COMMERCIAL-DESIGN.md)） |
-| 测试 | 135 个单测覆盖注册表与应用商店 / SSE 解析 / 提示词组装(含世界书) / 聊天状态机 / 群聊与生图执行器 / 角色卡解析 / 世界书解析 / 记忆合并 / 主题包 / 授权接缝 / 备份恢复 / 朋友圈 / 通话 / 天气与纪念日 |
+| 测试 | 146 个单测覆盖注册表与应用商店 / SSE 解析 / 提示词组装(含世界书) / 聊天状态机 / 群聊与生图执行器 / 主动消息(作息/到期/执行) / 角色卡解析 / 世界书解析 / 记忆合并 / 主题包 / 授权接缝 / 备份恢复 / 朋友圈 / 通话 / 天气与纪念日 |
 
 ## 架构一览
 
@@ -85,11 +86,11 @@ purin/
 │  ├─ sw.js                 # Service Worker（静态缓存壳；commercial.json 与授权接口永远走网络）
 │  └─ icon*.svg             # 应用图标（占位布丁，欢迎替换成正式图标）
 ├─ src/
-│  ├─ ai/            # Provider 抽象、openai-compatible(含生图)、预设、提示词(1v1/群/圈/通话)、运行器、创意生成、AI 捏人、记忆总结
+│  ├─ ai/            # Provider 抽象、openai-compatible(含生图)、预设、提示词(1v1/群/圈/通话)、运行器、创意生成、AI 捏人、记忆总结、主动消息引擎
 │  ├─ apps/          # App 注册表 + 基础 App（chat/contacts/store/settings）+ 扩展目录 extensions.ts（moments/notes/worldbook/weather/anniversary 懒加载）
 │  ├─ core/          # 事件总线、id、存储适配、md 渲染、deeplink、下载、世界书解析、授权接缝、商用配置、备份恢复、语音(TTS/ASR)、图片仓(IndexedDB)
 │  ├─ phone/         # 手机壳（状态栏/锁屏/通知面板/通话层/激活门，不含业务）
-│  ├─ state/         # zustand store（settings/characters/chat/groups/worldbooks/moments/phone/notifications/call/apps安装列表）
+│  ├─ state/         # zustand store（settings/characters/chat/groups/worldbooks/moments/phone/notifications/call/apps安装列表/proactive主动消息）
 │  ├─ styles/        # global.css（全部样式，CSS 变量驱动）
 │  └─ theme/         # 主题定义与注册
 └─ license-server/   # 可选的激活码授权服务器（商用时才部署，见其 README）

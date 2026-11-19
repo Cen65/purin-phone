@@ -163,6 +163,9 @@ function CharacterEditor({ characterId, onDone }: { characterId: string | null; 
     memory: character?.memory ?? "",
     firstMessage: character?.firstMessage ?? "",
     exampleDialogue: character?.exampleDialogue ?? "",
+    proactiveEnabled: character?.proactiveEnabled !== false,
+    sleepFrom: character?.sleepFrom ?? "",
+    sleepTo: character?.sleepTo ?? "",
   });
 
   const save = () => {
@@ -172,6 +175,8 @@ function CharacterEditor({ characterId, onDone }: { characterId: string | null; 
       memory: draft.memory?.trim() || undefined,
       firstMessage: draft.firstMessage?.trim() || undefined,
       exampleDialogue: draft.exampleDialogue?.trim() || undefined,
+      sleepFrom: draft.sleepFrom?.trim() || undefined,
+      sleepTo: draft.sleepTo?.trim() || undefined,
     };
     if (character) {
       updateCharacter(character.id, cleaned);
@@ -244,6 +249,37 @@ function CharacterEditor({ characterId, onDone }: { characterId: string | null; 
           onChange={(event) => setDraft({ ...draft, exampleDialogue: event.target.value })}
         />
       </label>
+      <label className="field">
+        <span className="field-label">主动消息（角色会自己找话题给你发消息）</span>
+        <div className="inline-row">
+          <button
+            type="button"
+            className="secondary"
+            onClick={() => setDraft({ ...draft, proactiveEnabled: !draft.proactiveEnabled })}
+          >
+            {draft.proactiveEnabled === false ? "已关闭（点击开启）" : "已开启（点击关闭）"}
+          </button>
+        </div>
+      </label>
+      <div className="editor-row">
+        <label className="field">
+          <span className="field-label">作息·入睡（可选）</span>
+          <input
+            type="time"
+            value={draft.sleepFrom ?? ""}
+            onChange={(event) => setDraft({ ...draft, sleepFrom: event.target.value })}
+          />
+        </label>
+        <label className="field">
+          <span className="field-label">作息·起床（可选）</span>
+          <input
+            type="time"
+            value={draft.sleepTo ?? ""}
+            onChange={(event) => setDraft({ ...draft, sleepTo: event.target.value })}
+          />
+        </label>
+      </div>
+      <p className="field-hint">作息时间内角色不会主动发消息（例：23:00 – 07:00 表示晚睡早起型）；留空 = 全天可发。</p>
       <div className="editor-actions">
         <button type="button" className="primary" onClick={save} disabled={!draft.name.trim()}>
           保存
