@@ -2,6 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import { registerBuiltinApps } from "./apps/builtin";
+import { registerInstalledExtensions } from "./apps/extensions";
 import { ensureSeed } from "./state/seed";
 import { useSettingsStore } from "./state/settingsStore";
 import { useNotificationsStore } from "./state/notificationsStore";
@@ -24,8 +25,9 @@ async function bootstrap(): Promise<void> {
     setActiveEntitlementProvider("license-server");
   }
 
-  // 1. 注册内置 App（未来：这里也是加载第三方 App 的位置）
+  // 1. 注册基础 App + 按安装列表装回扩展 App（应用商店）
   registerBuiltinApps();
+  registerInstalledExtensions();
 
   // 2. 首次启动种子数据
   ensureSeed();

@@ -1,13 +1,13 @@
 import { registerApp } from "./registry";
 import ChatApp from "./chat/ChatApp";
 import ContactsApp from "./contacts/ContactsApp";
-import MomentsApp from "./moments/MomentsApp";
-import NotesApp from "./notes/NotesApp";
 import SettingsApp from "./settings/SettingsApp";
-import WorldbookApp from "./worldbook/WorldbookApp";
+import StoreApp from "./store/StoreApp";
 
 /**
- * 内置 App 注册。第三方/实验性 App 未来在这里追加 registerApp 即可上桌面。
+ * 基础 App（系统自带，不可卸载）：聊天 / 联系人 / 商店 / 设置。
+ * 朋友圈、便签、世界书、天气、纪念日等扩展能力在「应用商店」里按需安装，
+ * 目录定义见 src/apps/extensions.ts。
  */
 export function registerBuiltinApps(): void {
   registerApp({
@@ -31,34 +31,14 @@ export function registerBuiltinApps(): void {
     component: ContactsApp,
   });
   registerApp({
-    id: "worldbook",
-    name: "世界书",
-    icon: "📖",
+    id: "store",
+    name: "应用商店",
+    icon: "🛍️",
     version: "0.1.0",
-    description: "给角色挂载背景知识库",
-    category: "tools",
-    order: 35,
-    component: WorldbookApp,
-  });
-  registerApp({
-    id: "moments",
-    name: "朋友圈",
-    icon: "🌟",
-    version: "0.1.0",
-    description: "角色们的动态：点赞、评论",
-    category: "social",
-    order: 40,
-    component: MomentsApp,
-  });
-  registerApp({
-    id: "notes",
-    name: "便签",
-    icon: "📝",
-    version: "0.1.0",
-    description: "最简 App 示例",
-    category: "tools",
-    order: 30,
-    component: NotesApp,
+    description: "安装和卸载扩展应用",
+    category: "system",
+    order: 45,
+    component: StoreApp,
   });
   registerApp({
     id: "settings",

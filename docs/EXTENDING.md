@@ -67,6 +67,27 @@ registerApp({
 
 刷新桌面即可看到。完整字段见 `src/apps/types.ts` 的 `AppManifest`。
 
+### 基础 App vs 扩展 App（应用商店）
+
+桌面常驻的只有基础 App（`src/apps/builtin.ts`：聊天/联系人/商店/设置）。想让你的 App 走**应用商店按需安装**，不要动 builtin，而是登记到扩展目录 `src/apps/extensions.ts`：
+
+```ts
+// src/apps/todo/TodoApp.tsx 必须是 default export
+todo: {
+  manifest: { id: "todo", name: "待办", icon: "✅", version: "0.1.0",
+              category: "tools", order: 40, description: "一句话描述" },
+  blurb: "商店页的卖点文案。",
+  load: () => import("./todo/TodoApp"),
+},
+```
+
+效果与机制：
+
+- 安装 = `installApp("todo")`（商店页自动接线）：把懒加载组件挂进注册表，图标上桌面；**代码块只在首次打开时才下载**（Vite 自动分包）。
+- 卸载 = `uninstallApp("todo")`：图标消失、清角标、正打开则回桌面；**数据保留**，重新安装即恢复。
+- 安装状态持久化在 `purin.apps`，启动时 `registerInstalledExtensions()` 自动装回。
+- 想默认预装（像朋友圈/便签/世界书那样），把 id 加进 `src/state/appManagerStore.ts` 的默认 `installed` 列表。
+
 ### App 能拿到什么
 
 | 能力 | 用法 |

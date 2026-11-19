@@ -1857,3 +1857,232 @@ button.link-btn {
   }
 }
 
+/* ===== 应用商店（扩展生态） ===== */
+.store {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.store-hero {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, var(--c-accent-soft), var(--c-surface));
+}
+.store-hero-icon {
+  font-size: 30px;
+}
+.store-hero-title {
+  font-weight: 700;
+}
+.store-hero-sub {
+  font-size: 12px;
+  color: var(--c-text-dim);
+}
+.store-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.store-section-title {
+  font-size: 12px;
+  color: var(--c-text-dim);
+  padding-left: 2px;
+}
+.store-empty {
+  font-size: 13px;
+  color: var(--c-text-dim);
+  padding: 10px 2px;
+}
+.store-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--c-border);
+  border-radius: 16px;
+  background: var(--c-surface);
+}
+.store-row-icon {
+  font-size: 26px;
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: var(--c-surface-2);
+  flex-shrink: 0;
+}
+.store-row-main {
+  flex: 1;
+  min-width: 0;
+}
+.store-row-name {
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.store-row-meta {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--c-text-dim);
+}
+.store-row-blurb {
+  font-size: 12px;
+  color: var(--c-text-dim);
+  margin-top: 2px;
+}
+.store-btn {
+  flex-shrink: 0;
+  padding: 7px 16px;
+  border-radius: 999px;
+  border: none;
+  background: var(--c-accent);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.store-btn-remove {
+  background: transparent;
+  color: var(--c-danger);
+  border: 1px solid var(--c-danger);
+}
+.store-foot {
+  font-size: 11px;
+  color: var(--c-text-dim);
+  text-align: center;
+  padding-bottom: 6px;
+}
+.app-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 160px;
+  color: var(--c-text-dim);
+  font-size: 13px;
+}
+
+/* ===== 天气 App ===== */
+.weather {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.weather-city {
+  display: flex;
+  gap: 8px;
+}
+.weather-city select {
+  flex: 1;
+}
+.weather-empty {
+  text-align: center;
+  color: var(--c-text-dim);
+  padding: 40px 0;
+  font-size: 13px;
+}
+.weather-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 26px 16px;
+  border-radius: 22px;
+  background: linear-gradient(160deg, var(--c-accent-soft), var(--c-surface));
+}
+.weather-emoji {
+  font-size: 46px;
+}
+.weather-temp {
+  font-size: 52px;
+  font-weight: 700;
+  line-height: 1;
+}
+.weather-desc {
+  font-size: 14px;
+  color: var(--c-text-dim);
+}
+.weather-stale {
+  font-size: 11px;
+  margin-left: 4px;
+}
+.weather-meta {
+  display: flex;
+  gap: 14px;
+  font-size: 12px;
+  color: var(--c-text-dim);
+  margin-top: 8px;
+}
+.weather-error {
+  font-size: 12px;
+  color: var(--c-danger);
+}
+.weather-foot {
+  font-size: 11px;
+  color: var(--c-text-dim);
+  text-align: center;
+}
+
+/* ===== 纪念日 App ===== */
+.anniv {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.anniv-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.anniv-empty {
+  text-align: center;
+  color: var(--c-text-dim);
+  padding: 30px 0;
+  font-size: 13px;
+}
+.anniv-card {
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid var(--c-border);
+  background: var(--c-surface);
+}
+.anniv-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.anniv-title {
+  font-weight: 600;
+}
+.anniv-days {
+  font-size: 15px;
+  margin-top: 6px;
+}
+.anniv-days b {
+  font-size: 22px;
+  color: var(--c-accent);
+  margin: 0 2px;
+}
+.anniv-with {
+  font-size: 12px;
+  color: var(--c-text-dim);
+}
+.anniv-next {
+  font-size: 12px;
+  color: var(--c-text-dim);
+  margin-top: 4px;
+}
+.anniv-composer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px dashed var(--c-border);
+}
+

@@ -1,8 +1,10 @@
+import { Suspense } from "react";
 import { getApp } from "../apps/registry";
 import { usePhoneStore } from "../state/phoneStore";
 import { AppErrorBoundary } from "./AppErrorBoundary";
 
-/** App 宿主：渲染当前打开的应用，提供标题栏 / 返回 / 错误隔离。 */
+/** App 宿主：渲染当前打开的应用，提供标题栏 / 返回 / 错误隔离。
+ *  扩展 App 是懒加载组件，首次打开会拉代码块——用 Suspense 给个加载态。 */
 export function AppHost() {
   const activeAppId = usePhoneStore((s) => s.activeAppId);
   const goHome = usePhoneStore((s) => s.goHome);
@@ -26,7 +28,9 @@ export function AppHost() {
     <div className="app-host">
       <AppErrorBoundary appName={app.name}>
         {fullscreen ? (
-          <Content appId={app.id} />
+          <Suspense fallback={<div className="app-loading">正在打开 {app.icon}…</div>}>
+            <Content appId={app.id} />
+          </Suspense>
         ) : (
           <>
             <header className="app-header">
@@ -40,7 +44,9 @@ export function AppHost() {
               <span className="icon-btn ghost" aria-hidden="true" />
             </header>
             <div className="app-body">
-              <Content appId={app.id} />
+              <Suspense fallback={<div className="app-loading">正在打开 {app.icon}…</div>}>
+                <Content appId={app.id} />
+              </Suspense>
             </div>
           </>
         )}
