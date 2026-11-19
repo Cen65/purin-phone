@@ -25,8 +25,12 @@ export default function SettingsApp(_props: AppProps) {
   const memoryAuto = useSettingsStore((s) => s.memoryAuto);
   const engineOn = useProactiveStore((s) => s.engineOn);
   const gapMinutes = useProactiveStore((s) => s.gapMinutes);
+  const momentsOn = useProactiveStore((s) => s.momentsOn);
+  const momentGapMinutes = useProactiveStore((s) => s.momentGapMinutes);
   const setEngineOn = useProactiveStore((s) => s.setEngineOn);
   const setGapMinutes = useProactiveStore((s) => s.setGapMinutes);
+  const setMomentsOn = useProactiveStore((s) => s.setMomentsOn);
+  const setMomentGapMinutes = useProactiveStore((s) => s.setMomentGapMinutes);
   const setApi = useSettingsStore((s) => s.setApi);
   const setPersona = useSettingsStore((s) => s.setPersona);
   const setThemeId = useSettingsStore((s) => s.setThemeId);
@@ -237,6 +241,23 @@ export default function SettingsApp(_props: AppProps) {
             <button type="button" className="secondary" onClick={() => setMemoryAuto(!memoryAuto)}>
               {memoryAuto ? "已开启（点击关闭）" : "已关闭（点击开启）"}
             </button>
+          </div>
+        </Field>
+        <Field label="朋友圈自动发帖" hint="角色们隔一阵子自己发朋友圈（应用打开期间）；睡眠作息内的角色不发">
+          <div className="inline-row">
+            <button type="button" className="secondary" onClick={() => setMomentsOn(!momentsOn)}>
+              {momentsOn ? "已开启（点击关闭）" : "已关闭（点击开启）"}
+            </button>
+            <select
+              value={momentGapMinutes}
+              onChange={(event) => setMomentGapMinutes(Number(event.target.value))}
+            >
+              {[120, 240, 480, 720].map((minutes) => (
+                <option key={minutes} value={minutes}>
+                  间隔约 {minutes / 60} 小时
+                </option>
+              ))}
+            </select>
           </div>
         </Field>
         <Field label="上下文条数" hint="每次请求带给 AI 的最近消息条数；更省额度调小，更记得住前文调大">

@@ -5,6 +5,8 @@ import {
   pickDueCharacters,
   buildProactiveMessages,
   runProactiveRound,
+  pickMomentPoster,
+  runMomentRound,
 } from "./proactive";
 import { registerProvider } from "./providers";
 import { useSettingsStore } from "../state/settingsStore";
@@ -12,6 +14,7 @@ import { useCharactersStore } from "../state/charactersStore";
 import { useChatStore } from "../state/chatStore";
 import { usePhoneStore } from "../state/phoneStore";
 import { useProactiveStore } from "../state/proactiveStore";
+import { useMomentsStore } from "../state/momentsStore";
 import { bus } from "../core/events";
 import type { ChatRequest, LLMProvider } from "./types";
 import type { Character } from "../types";
@@ -47,7 +50,16 @@ beforeEach(() => {
   useCharactersStore.setState({ characters: [alice] });
   useChatStore.setState({ messages: {}, generating: {} });
   usePhoneStore.setState({ activeAppId: null, params: {}, badges: {} });
-  useProactiveStore.setState({ engineOn: true, gapMinutes: 120, checkMinutes: 10, lastAt: {} });
+  useProactiveStore.setState({
+    engineOn: true,
+    gapMinutes: 120,
+    checkMinutes: 10,
+    lastAt: {},
+    momentsOn: true,
+    momentGapMinutes: 240,
+    lastMomentAt: {},
+  });
+  useMomentsStore.setState({ moments: [] });
 });
 
 describe("作息判断", () => {
@@ -168,5 +180,74 @@ describe("执行一轮", () => {
     expect(sent).toEqual([]);
     expect(useChatStore.getState().messages["a"]).toBeUndefined();
     expect(useProactiveStore.getState().lastAt["a"]).toBeGreaterThan(0);
+  });
+});
+
+describe("朋友圈自动发帖 · pickMomentPoster", () => {
+  const NOW = 1_000_000_000;
+
+  it("开关关 → null", () => {
+    expect(pickMomentPoster([alice], { now: NOW, momentsOn: false })).toBeNull();
+  });
+
+  it("从没发过：视为到期可选中", () => {
+    expect(pickMomentPoster([alice], { now: NOW, rand: () => 0 })?.id).toBe("a");
+  });
+
+  it("间隔内 → null；超过间隔 → 选中", () => {
+    const last = NOW - 1 * HOUR; // gap 默认 240 分钟，才过 1 小时
+    expect(pickMomentPoster([alice], { now: NOW, lastMomentAt: { a: last }, rand: () => 0 })).toBeNull();
+    const old = NOW - 5 * HOUR;
+    expect(pickMomentPoster([alice], { now: NOW, lastMomentAt: { a: old }, rand: () => 0 })?.id).toBe("a");
+  });
+
+  it("睡眠中的角色不发朋友圈", () => {
+    const sleeper: Character = { ...alice, sleepFrom: "00:00", sleepTo: "23:59" };
+    expect(pickMomentPoster([sleeper], { now: NOW, rand: () => 0 })).toBeNull();
+  });
+
+  it("多个到期候选随机挑一个", () => {
+    const bob: Character = { ...alice, id: "b", name: "鲍勃" };
+    expect(pickMomentPoster([alice, bob], { now: NOW, rand: () => 0 })?.id).toBe("a");
+    expect(pickMomentPoster([alice, bob], { now: NOW, rand: () => 0.99 })?.id).toBe("b");
+  });
+});
+
+describe("朋友圈自动发帖 · runMomentRound", () => {
+  const NOW = 1_000_000_000;
+
+  it("发一条：写入朋友圈 + 记账", async () => {
+    const posted = await runMomentRound(NOW);
+    expect(posted).toHaveLength(1);
+    const moments = useMomentsStore.getState().moments;
+    expect(moments).toHaveLength(1);
+    expect(moments[0]?.authorId).toBe("a");
+    expect(moments[0]?.authorName).toBe("爱丽丝");
+    expect(useProactiveStore.getState().lastMomentAt["a"]).toBe(NOW);
+  });
+
+  it("momentsOn=false 跳过：不发也不记账", async () => {
+    useProactiveStore.setState({ momentsOn: false });
+    const posted = await runMomentRound(NOW);
+    expect(posted).toEqual([]);
+    expect(useMomentsStore.getState().moments).toHaveLength(0);
+    expect(useProactiveStore.getState().lastMomentAt["a"]).toBeUndefined();
+  });
+
+  it("API 未配置：不生成不记账", async () => {
+    useSettingsStore.setState({ api: { provider: "fake", baseUrl: "", apiKey: "", model: "" } });
+    const posted = await runMomentRound(NOW);
+    expect(posted).toEqual([]);
+    expect(useProactiveStore.getState().lastMomentAt["a"]).toBeUndefined();
+  });
+
+  it("生成失败也退避（touchMoment）", async () => {
+    replier = async () => {
+      throw new Error("炸了");
+    };
+    const posted = await runMomentRound(NOW);
+    expect(posted).toEqual([]);
+    expect(useMomentsStore.getState().moments).toHaveLength(0);
+    expect(useProactiveStore.getState().lastMomentAt["a"]).toBe(NOW);
   });
 });

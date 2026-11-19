@@ -1,7 +1,7 @@
 import type { LLMMessage } from "./types";
 import type { Character } from "../types";
 import type { ChatMessage } from "../state/chatStore";
-import { chatOnce } from "./creative";
+import { chatOnce, generateMoment } from "./creative";
 import { humanToneRules } from "./prompt";
 import { useSettingsStore, isApiReady, type PersonaSettings } from "../state/settingsStore";
 import { useProactiveStore } from "../state/proactiveStore";
@@ -199,12 +199,77 @@ export async function runProactiveRound(now: number = Date.now()): Promise<Proac
 
 let engineTimer: ReturnType<typeof setInterval> | null = null;
 
+/* ── 朋友圈自动发帖 ────────────────────────────────────────────
+ * 与主动消息共用一个巡检节拍：每轮挑一个「到期的」角色让 TA 发条朋友圈。
+ * 节奏：lastMomentAt + momentGapMinutes（+抖动）；从未发过的角色视为随时可发。
+ * 睡眠作息内不发（睡着的人不刷朋友圈）；每轮最多 1 条。 */
+
+export interface MomentPosterContext {
+  now?: number;
+  momentsOn?: boolean;
+  gapMinutes?: number;
+  lastMomentAt?: Record<string, number>;
+  rand?: () => number;
+}
+
+/** 挑出此刻该发朋友圈的角色（0 或 1 个）；到期候选里随机挑，避免永远固定顺序 */
+export function pickMomentPoster(
+  characters: Character[],
+  ctx: MomentPosterContext = {},
+): Character | null {
+  const now = ctx.now ?? Date.now();
+  if (ctx.momentsOn === false) return null;
+  const gap = Math.max(1, ctx.gapMinutes ?? 240) * MINUTE_MS;
+  const rand = ctx.rand ?? Math.random;
+  const date = new Date(now);
+
+  const due = characters
+    .filter((c) => !isSleeping(c, date))
+    .filter((c) => {
+      const last = (ctx.lastMomentAt ?? {})[c.id];
+      if (last === undefined) return true; // 从没发过：视为到期
+      return now >= last + gap + rand() * (gap / 2);
+    });
+  if (due.length === 0) return null;
+  return due[Math.floor(rand() * due.length)] ?? null;
+}
+
+/** 跑一轮朋友圈：挑到期角色 → generateMoment（内部已做通知/角标/事件）→ 记时间退避 */
+export async function runMomentRound(now: number = Date.now()): Promise<string[]> {
+  const settings = useSettingsStore.getState();
+  const proactive = useProactiveStore.getState();
+  const characters = useCharactersStore.getState().characters;
+
+  const poster = pickMomentPoster(characters, {
+    now,
+    // 朋友圈自动发帖跟随两个开关：momentsOn 自己的开关 + 引擎总开关
+    momentsOn: proactive.momentsOn && proactive.engineOn,
+    gapMinutes: proactive.momentGapMinutes,
+    lastMomentAt: proactive.lastMomentAt,
+  });
+  // API 未配置时不挑人（避免必然失败的生成）
+  if (!poster || !isApiReady(settings.api)) return [];
+
+  const posted: string[] = [];
+  try {
+    const moment = await generateMoment(poster.id);
+    if (moment) posted.push(moment.id);
+  } catch (error) {
+    console.warn("[moments] 自动发帖失败", poster.name, error);
+  } finally {
+    // 成功失败都记时间：按完整间隔退避，避免坏配置下每轮重试
+    useProactiveStore.getState().touchMoment(poster.id, now);
+  }
+  return posted;
+}
+
 /** 启动巡检引擎（浏览器端，main.tsx 调用；重复调用幂等）。返回停止函数。 */
 export function startProactiveEngine(): () => void {
   if (typeof window === "undefined") return () => {};
   if (engineTimer !== null) return () => stopProactiveEngine();
   const tick = () => {
     void runProactiveRound().catch((error) => console.warn("[proactive] 巡检异常", error));
+    void runMomentRound().catch((error) => console.warn("[moments] 巡检异常", error));
   };
   engineTimer = setInterval(tick, useProactiveStore.getState().checkMinutes * MINUTE_MS);
   // 页面从后台切回前台时补一轮（后台定时器可能被浏览器节流错过了到期点）

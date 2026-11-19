@@ -11,6 +11,8 @@ export interface Character {
   systemPrompt: string;
   /** 长期记忆：关于用户与你们的经历，会注入系统 Prompt（可手动维护，也可在聊天里让 AI 总结） */
   memory?: string;
+  /** 印象档案：角色视角对用户的印象（TA 是个怎样的人），注入系统 Prompt 影响态度；聊天页 👁 可生成/编辑 */
+  impression?: string;
   /** 开场白：会话为空时自动作为第一条消息发出 */
   firstMessage?: string;
   /** 对话示例：示范语气和口癖，注入系统提示词（模仿风格，不照抄内容） */

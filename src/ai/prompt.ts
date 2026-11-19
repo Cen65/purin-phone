@@ -29,6 +29,11 @@ function characterLines(character: Character): string[] {
   if (character.memory?.trim()) {
     lines.push(`你记得的长期记忆（你和用户之间发生过的事）：\n${character.memory.trim()}`);
   }
+  if (character.impression?.trim()) {
+    lines.push(
+      `你对用户的印象（你眼中的 TA，让它自然体现在态度和亲疏里，不要复述出来）：\n${character.impression.trim()}`,
+    );
+  }
   if (character.exampleDialogue?.trim()) {
     lines.push(`对话示例（模仿这里的语气和口癖，但不要照抄内容）：\n${character.exampleDialogue.trim()}`);
   }

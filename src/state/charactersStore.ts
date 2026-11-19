@@ -14,6 +14,7 @@ const KNOWN_CARD_TYPES = new Set(["purin.character", "my-phone.character"]);
  * 角色卡（P1 建立，P3 增强）：导入 / 导出的可交换格式。
  * 刻意保持小而稳：只含人设相关字段，type + version 供未来升级识别。
  * v1.1 追加可选的 firstMessage / exampleDialogue（向后兼容）。
+ * v1.3 追加可选的 impression（印象档案）。
  */
 export interface CharacterCard {
   type: "purin.character";
@@ -23,6 +24,8 @@ export interface CharacterCard {
   tagline: string;
   systemPrompt: string;
   memory?: string;
+  /** 印象档案（v1.3 可选）：角色视角对用户的印象 */
+  impression?: string;
   firstMessage?: string;
   exampleDialogue?: string;
   /** 说话篇幅（v1.2 可选，缺省 = short） */
@@ -44,6 +47,7 @@ export function toCard(character: Character): CharacterCard {
     systemPrompt: character.systemPrompt,
   };
   if (character.memory?.trim()) card.memory = character.memory.trim();
+  if (character.impression?.trim()) card.impression = character.impression.trim();
   if (character.firstMessage?.trim()) card.firstMessage = character.firstMessage.trim();
   if (character.exampleDialogue?.trim()) card.exampleDialogue = character.exampleDialogue.trim();
   if (character.styleLength) card.styleLength = character.styleLength;
@@ -79,6 +83,9 @@ export function parseCard(json: string): CharacterDraft {
     systemPrompt: card.systemPrompt,
   };
   if (typeof card.memory === "string" && card.memory.trim()) draft.memory = card.memory.trim();
+  if (typeof card.impression === "string" && card.impression.trim()) {
+    draft.impression = card.impression.trim();
+  }
   if (typeof card.firstMessage === "string" && card.firstMessage.trim()) draft.firstMessage = card.firstMessage.trim();
   if (typeof card.exampleDialogue === "string" && card.exampleDialogue.trim()) {
     draft.exampleDialogue = card.exampleDialogue.trim();

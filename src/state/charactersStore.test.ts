@@ -71,6 +71,15 @@ describe("角色卡", () => {
     expect(bad.styleLength).toBeUndefined();
   });
 
+  it("印象档案（v1.3）随卡往返；无印象不带字段", () => {
+    const withImpression: Character = { ...character, impression: "- TA 嘴硬心软" };
+    const draft = parseCard(JSON.stringify(toCard(withImpression)));
+    expect(draft.impression).toBe("- TA 嘴硬心软");
+    const plain = parseCard(JSON.stringify(toCard(character)));
+    expect(plain.impression).toBeUndefined();
+    expect(JSON.stringify(toCard(character))).not.toContain("impression");
+  });
+
   it("parseCard 对非法输入抛「角色卡格式不正确」", () => {
     expect(() => parseCard("不是json")).toThrow("角色卡格式不正确");
     expect(() => parseCard("{}")).toThrow("角色卡格式不正确");

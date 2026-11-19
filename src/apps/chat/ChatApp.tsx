@@ -7,6 +7,7 @@ import { usePhoneStore } from "../../state/phoneStore";
 import { useSettingsStore, isApiReady } from "../../state/settingsStore";
 import { sendMessage, sendGroupMessage, regenerate, stopGeneration } from "../../ai/chatRunner";
 import { mergeMemory } from "../../ai/memory";
+import { mergeImpression } from "../../ai/impression";
 import { renderMarkdown } from "../../core/md";
 import { downloadTextFile } from "../../core/download";
 import { loadImage } from "../../core/imageStore";
@@ -282,6 +283,8 @@ function Conversation({ character }: { character: Character }) {
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [memoryBusy, setMemoryBusy] = useState(false);
   const [memoryDraft, setMemoryDraft] = useState<string | null>(null);
+  const [impressionBusy, setImpressionBusy] = useState(false);
+  const [impressionDraft, setImpressionDraft] = useState<string | null>(null);
   const [listening, setListening] = useState(false);
   const listenStopRef = useRef<(() => void) | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -348,6 +351,19 @@ function Conversation({ character }: { character: Character }) {
     }
   };
 
+  const summarizeImpression = async () => {
+    if (impressionBusy || generating || messages.length < 4) return;
+    setImpressionBusy(true);
+    try {
+      setImpressionDraft(await mergeImpression(character.id));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      bus.emit("notify", { kind: "error", title: "印象生成失败", body: message.slice(0, 80) });
+    } finally {
+      setImpressionBusy(false);
+    }
+  };
+
   const submit = () => {
     const text = draft.trim();
     if (!text || generating) return;
@@ -376,6 +392,16 @@ function Conversation({ character }: { character: Character }) {
             }}
           >
             {voiceAutoSpeak ? "🔊" : "🔇"}
+          </button>
+          <button
+            type="button"
+            className="icon-btn"
+            title="印象档案（TA 眼中的你，影响态度与亲疏）"
+            aria-label="印象档案"
+            disabled={impressionBusy || generating || messages.length < 4}
+            onClick={() => void summarizeImpression()}
+          >
+            {impressionBusy ? "⏳" : "👁"}
           </button>
           <button
             type="button"
@@ -512,6 +538,42 @@ function Conversation({ character }: { character: Character }) {
                 保存记忆
               </button>
               <button type="button" className="secondary" onClick={() => setMemoryDraft(null)}>
+                取消
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {impressionDraft !== null && (
+        <div className="modal-mask" onClick={() => setImpressionDraft(null)}>
+          <div className="modal-card" onClick={(event) => event.stopPropagation()}>
+            <h3 className="modal-title">👁 印象档案 · {character.name} 眼中的你</h3>
+            <p className="modal-hint">
+              这是 {character.name} 对你的印象（性格/喜好/关系远近）。可手动修改，保存后注入提示词，影响
+              TA 对你的态度和亲疏。
+            </p>
+            <textarea
+              className="modal-textarea"
+              rows={8}
+              placeholder="- TA 是个……"
+              value={impressionDraft}
+              onChange={(event) => setImpressionDraft(event.target.value)}
+            />
+            <div className="modal-actions">
+              <button
+                type="button"
+                className="primary"
+                disabled={!impressionDraft.trim()}
+                onClick={() => {
+                  updateCharacter(character.id, { impression: impressionDraft.trim() });
+                  setImpressionDraft(null);
+                  bus.emit("notify", { title: "印象已更新", body: `${character.name} 看你的眼光变了` });
+                }}
+              >
+                保存印象
+              </button>
+              <button type="button" className="secondary" onClick={() => setImpressionDraft(null)}>
                 取消
               </button>
             </div>

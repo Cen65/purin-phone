@@ -25,6 +25,17 @@ describe("buildSystemPrompt", () => {
     const prompt = buildSystemPrompt(character, { nickname: "" });
     expect(prompt).toContain("用户");
   });
+
+  it("印象档案注入系统提示词（角色视角看用户）", () => {
+    const prompt = buildSystemPrompt(
+      { ...character, impression: "- TA 是个夜猫子，嘴硬心软" },
+      { nickname: "小明" },
+    );
+    expect(prompt).toContain("你对用户的印象");
+    expect(prompt).toContain("TA 是个夜猫子");
+    // 无印象时不出现该段落
+    expect(buildSystemPrompt(character, { nickname: "小明" })).not.toContain("你对用户的印象");
+  });
 });
 
 describe("buildMessages", () => {

@@ -4,8 +4,17 @@
  *  - 页面导航：network-first，拿不到再回退缓存（保证发版后 index.html 是新的）
  *  - /commercial.json、/api/*、/admin/*：永远走网络（商用开关与授权必须实时）
  */
-const CACHE = "purin-v2";
-const PRECACHE = ["/", "/index.html", "/manifest.webmanifest", "/icon.svg"];
+const CACHE = "purin-v3";
+const PRECACHE = [
+  "/",
+  "/index.html",
+  "/manifest.webmanifest",
+  "/favicon.png",
+  "/icon-192.png",
+  "/icon-512.png",
+  "/icon-maskable.png",
+  "/apple-touch-icon.png",
+];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
