@@ -29,6 +29,8 @@ export interface Character {
   styleEmoticon?: boolean;
   /** 允许偶尔使用（括号小动作）神态描写（默认不用） */
   styleAction?: boolean;
+  /** 记忆游标：最后一次被记忆巩固消费掉的消息 id（见 ai/memory.ts 自动巩固） */
+  memoryCursor?: string;
   createdAt: number;
 }
 

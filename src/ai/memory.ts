@@ -80,3 +80,63 @@ export async function mergeMemory(characterId: string): Promise<string> {
   );
   return capMemory(merged);
 }
+
+/* ── 自动巩固 ────────────────────────────────────────────────
+ * 每条角色消息落定后由 chatRunner 触发一次「要不要巩固」检查：
+ * 新消息（游标之后）达到阈值 且 距上次尝试超过冷却 且 不在跑 → 后台合并并直接落库。
+ * 失败静默（console.warn + 冷却），不打扰聊天；游标存 Character.memoryCursor。 */
+
+/** 新消息累计多少条触发一次自动巩固 */
+export const AUTO_MEMORY_THRESHOLD = 12;
+/** 两次自动巩固尝试之间的最小间隔（含失败） */
+export const AUTO_MEMORY_COOLDOWN_MS = 5 * 60_000;
+
+const inflight = new Set<string>();
+const lastAttempt = new Map<string, number>();
+
+/** 游标之后的新消息（游标丢失——比如清空过会话——视为全部是新消息） */
+export function messagesAfterCursor(messages: ChatMessage[], cursor?: string): ChatMessage[] {
+  if (!cursor) return [...messages];
+  const index = messages.findIndex((message) => message.id === cursor);
+  if (index === -1) return [...messages];
+  return messages.slice(index + 1);
+}
+
+/**
+ * 自动巩固入口（由 chatRunner 在单聊回复完成后 fire-and-forget 调用）。
+ * 不抛错：所有失败路径都静默退避，等待下次触发。
+ */
+export async function maybeAutoConsolidate(characterId: string): Promise<void> {
+  const character = useCharactersStore.getState().characters.find((c) => c.id === characterId);
+  if (!character) return;
+  const settings = useSettingsStore.getState();
+  if (settings.memoryAuto === false) return;
+  if (!isApiReady(settings.api)) return;
+  if (inflight.has(characterId)) return;
+  if (Date.now() - (lastAttempt.get(characterId) ?? 0) < AUTO_MEMORY_COOLDOWN_MS) return;
+
+  const messages = useChatStore.getState().messages[characterId] ?? [];
+  const segment = messagesAfterCursor(messages, character.memoryCursor)
+    .filter((message) => message.content.trim().length > 0);
+  if (segment.length < AUTO_MEMORY_THRESHOLD) return;
+  const lastId = messages[messages.length - 1]?.id;
+
+  inflight.add(characterId);
+  lastAttempt.set(characterId, Date.now());
+  try {
+    const merged = await chatOnce(
+      buildMemoryMessages({ character, persona: settings.persona, history: segment }),
+    );
+    const capped = capMemory(merged);
+    if (capped && lastId) {
+      useCharactersStore.getState().updateCharacter(characterId, {
+        memory: capped,
+        memoryCursor: lastId,
+      });
+    }
+  } catch (error) {
+    console.warn("[memory] 自动巩固失败，稍后会再试", error);
+  } finally {
+    inflight.delete(characterId);
+  }
+}

@@ -10,6 +10,8 @@ import { collectWorldbookContext, scanTextOf, type WorldbookContext } from "../c
 import { usePhoneStore } from "../state/phoneStore";
 import { bus } from "../core/events";
 import { saveImage } from "../core/imageStore";
+import { maybeAutoConsolidate } from "./memory";
+import { pickSpeakers } from "./groupStrategy";
 
 /**
  * 聊天执行器：把 UI（发送按钮）和 AI 层（provider.chat）串联起来。
@@ -112,6 +114,8 @@ async function runAssistant(characterId: string): Promise<void> {
     if (usePhoneStore.getState().activeAppId !== "chat") {
       usePhoneStore.getState().bumpBadge("chat");
     }
+    // 记忆自动巩固：后台检查，条件不满足直接返回（见 ai/memory.ts）
+    void maybeAutoConsolidate(characterId);
   } catch (error) {
     if (isAbortError(error)) {
       // 用户主动停止：保留半截内容，静默收场
@@ -267,7 +271,7 @@ async function runGroupAssistant(group: Group, character: Character): Promise<vo
   }
 }
 
-/** 群聊发送：用户消息落库后，成员按 memberIds 顺序依次回复 */
+/** 群聊发送：用户消息落库后，按群的抢答策略挑人回复（全员按序 / 随机 / 话痨加权） */
 export async function sendGroupMessage(groupId: string, text: string): Promise<void> {
   const content = text.trim();
   if (!content) return;
@@ -285,7 +289,7 @@ export async function sendGroupMessage(groupId: string, text: string): Promise<v
   const conversationId = groupConversationId(groupId);
   stopped.delete(conversationId);
   useChatStore.getState().addUserMessage(conversationId, content);
-  for (const member of members) {
+  for (const member of pickSpeakers(members, group.replyMode)) {
     // 用户可能在轮到下一位前点了「停止」
     if (stopped.has(conversationId)) break;
     await runGroupAssistant(group, member);

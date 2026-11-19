@@ -10,6 +10,9 @@ import type { Character } from "../types";
  * 消息本体仍在 chatStore，speakerId 标记是哪位角色说的。
  */
 
+/** 抢答策略：全员按序 / 每轮随机 1~2 人 / 按"话多程度"加权抢答 */
+export type GroupReplyMode = "all" | "random" | "weighted";
+
 export interface Group {
   id: string;
   name: string;
@@ -17,13 +20,15 @@ export interface Group {
   memberIds: string[];
   /** 群绑定的世界书 id（注入时与成员绑定的书取并集） */
   worldbookIds?: string[];
+  /** 抢答策略（默认 all = 全员按序，见 ai/groupStrategy.ts） */
+  replyMode?: GroupReplyMode;
   createdAt: number;
 }
 
 interface GroupsState {
   groups: Group[];
-  addGroup: (name: string, memberIds: string[]) => Group;
-  updateGroup: (id: string, patch: Partial<Pick<Group, "name" | "memberIds" | "worldbookIds">>) => void;
+  addGroup: (name: string, memberIds: string[], replyMode?: GroupReplyMode) => Group;
+  updateGroup: (id: string, patch: Partial<Pick<Group, "name" | "memberIds" | "worldbookIds" | "replyMode">>) => void;
   removeGroup: (id: string) => void;
 }
 
@@ -31,11 +36,12 @@ export const useGroupsStore = create<GroupsState>()(
   persist(
     (set) => ({
       groups: [],
-      addGroup: (name, memberIds) => {
+      addGroup: (name, memberIds, replyMode) => {
         const group: Group = {
           id: uid(),
           name: name.trim() || "新群聊",
           memberIds: [...new Set(memberIds)],
+          replyMode: replyMode ?? "all",
           createdAt: Date.now(),
         };
         set((state) => ({ groups: [...state.groups, group] }));

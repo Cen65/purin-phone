@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { AppProps } from "../types";
 import { useChatStore, type ChatMessage } from "../../state/chatStore";
 import { useCharactersStore } from "../../state/charactersStore";
-import { useGroupsStore, groupConversationId, livingMembers, type Group } from "../../state/groupsStore";
+import { useGroupsStore, groupConversationId, livingMembers, type Group, type GroupReplyMode } from "../../state/groupsStore";
 import { usePhoneStore } from "../../state/phoneStore";
 import { useSettingsStore, isApiReady } from "../../state/settingsStore";
 import { sendMessage, sendGroupMessage, regenerate, stopGeneration } from "../../ai/chatRunner";
@@ -118,6 +118,7 @@ function GroupComposer({ onDone }: { onDone: () => void }) {
   const openApp = usePhoneStore((s) => s.openApp);
   const [name, setName] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
+  const [replyMode, setReplyMode] = useState<GroupReplyMode>("all");
 
   function toggle(id: string) {
     setSelected((current) => (current.includes(id) ? current.filter((x) => x !== id) : [...current, id]));
@@ -125,7 +126,7 @@ function GroupComposer({ onDone }: { onDone: () => void }) {
 
   function create() {
     if (selected.length === 0) return;
-    const group = addGroup(name, selected);
+    const group = addGroup(name, selected, replyMode);
     onDone();
     openApp("chat", { groupId: group.id });
   }
@@ -149,10 +150,32 @@ function GroupComposer({ onDone }: { onDone: () => void }) {
           </button>
         ))}
       </div>
+      <div className="field">
+        <label>抢答方式</label>
+        <ReplyModeSelect value={replyMode} onChange={setReplyMode} />
+      </div>
       <button type="button" className="primary" disabled={selected.length === 0} onClick={create}>
         创建（已选 {selected.length} 人）
       </button>
     </div>
+  );
+}
+
+const REPLY_MODE_OPTIONS: { value: GroupReplyMode; label: string }[] = [
+  { value: "all", label: "全员按序" },
+  { value: "random", label: "随机抢答（每轮 1~2 人）" },
+  { value: "weighted", label: "话痨优先（按性格加权）" },
+];
+
+function ReplyModeSelect({ value, onChange }: { value: GroupReplyMode; onChange: (mode: GroupReplyMode) => void }) {
+  return (
+    <select value={value} onChange={(e) => onChange(e.target.value as GroupReplyMode)}>
+      {REPLY_MODE_OPTIONS.map((option) => (
+        <option key={option.value} value={option.value}>
+          {option.label}
+        </option>
+      ))}
+    </select>
   );
 }
 
@@ -477,7 +500,11 @@ function Conversation({ character }: { character: Character }) {
                 className="primary"
                 disabled={!memoryDraft.trim()}
                 onClick={() => {
-                  updateCharacter(character.id, { memory: memoryDraft.trim() });
+                  updateCharacter(character.id, {
+                    memory: memoryDraft.trim(),
+                    // 手动保存也推进游标，避免自动巩固马上把同一段对话再滚一遍
+                    memoryCursor: messages[messages.length - 1]?.id,
+                  });
                   setMemoryDraft(null);
                   bus.emit("notify", { title: "记忆已更新", body: `${character.name} 会记得这些事` });
                 }}
@@ -500,6 +527,7 @@ function Conversation({ character }: { character: Character }) {
 function GroupConversation({ group }: { group: Group }) {
   const openApp = usePhoneStore((s) => s.openApp);
   const characters = useCharactersStore((s) => s.characters);
+  const updateGroup = useGroupsStore((s) => s.updateGroup);
   const conversationId = groupConversationId(group.id);
   const messages = useChatStore((s) => s.messages[conversationId]) ?? [];
   const generating = useChatStore((s) => s.generating[conversationId]) ?? false;
@@ -540,6 +568,19 @@ function GroupConversation({ group }: { group: Group }) {
           <span className="chat-room-sub">{members.map((m) => m.name).join("、") || "成员都已删除"}</span>
         </span>
         <span className="chat-tools">
+          <select
+            className="group-reply-mode"
+            value={group.replyMode ?? "all"}
+            title="抢答方式"
+            aria-label="抢答方式"
+            onChange={(e) => updateGroup(group.id, { replyMode: e.target.value as GroupReplyMode })}
+          >
+            {REPLY_MODE_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
           <button
             type="button"
             className="icon-btn"

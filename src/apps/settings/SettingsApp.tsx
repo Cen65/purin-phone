@@ -22,6 +22,7 @@ export default function SettingsApp(_props: AppProps) {
   const windowSize = useSettingsStore((s) => s.windowSize);
   const imageModel = useSettingsStore((s) => s.imageModel);
   const voiceAutoSpeak = useSettingsStore((s) => s.voiceAutoSpeak);
+  const memoryAuto = useSettingsStore((s) => s.memoryAuto);
   const engineOn = useProactiveStore((s) => s.engineOn);
   const gapMinutes = useProactiveStore((s) => s.gapMinutes);
   const setEngineOn = useProactiveStore((s) => s.setEngineOn);
@@ -32,6 +33,7 @@ export default function SettingsApp(_props: AppProps) {
   const setWindowSize = useSettingsStore((s) => s.setWindowSize);
   const setImageModel = useSettingsStore((s) => s.setImageModel);
   const setVoiceAutoSpeak = useSettingsStore((s) => s.setVoiceAutoSpeak);
+  const setMemoryAuto = useSettingsStore((s) => s.setMemoryAuto);
 
   const [showKey, setShowKey] = useState(false);
   const [testing, setTesting] = useState(false);
@@ -228,6 +230,13 @@ export default function SettingsApp(_props: AppProps) {
                 </option>
               ))}
             </select>
+          </div>
+        </Field>
+        <Field label="记忆自动巩固" hint="聊过约 12 条后，自动把新对话要点并进角色的长期记忆（也可在聊天里手动点 🧠）">
+          <div className="inline-row">
+            <button type="button" className="secondary" onClick={() => setMemoryAuto(!memoryAuto)}>
+              {memoryAuto ? "已开启（点击关闭）" : "已关闭（点击开启）"}
+            </button>
           </div>
         </Field>
         <Field label="上下文条数" hint="每次请求带给 AI 的最近消息条数；更省额度调小，更记得住前文调大">

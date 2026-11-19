@@ -1011,6 +1011,13 @@ button.link-btn {
   margin-left: auto;
   display: flex;
   gap: 2px;
+  align-items: center;
+}
+/* 群抢答方式下拉（群聊头部） */
+.group-reply-mode {
+  max-width: 96px;
+  font-size: 11px;
+  padding: 3px 6px;
 }
 .chat-room-main {
   display: flex;
