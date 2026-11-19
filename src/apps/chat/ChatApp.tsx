@@ -9,6 +9,8 @@ import { sendMessage, sendGroupMessage, regenerate, stopGeneration } from "../..
 import { mergeMemory } from "../../ai/memory";
 import { renderMarkdown } from "../../core/md";
 import { downloadTextFile } from "../../core/download";
+import { loadImage } from "../../core/imageStore";
+import { speak, stopSpeaking, asrSupported, listen } from "../../core/tts";
 import { bus } from "../../core/events";
 import type { Character } from "../../types";
 
@@ -156,6 +158,39 @@ function GroupComposer({ onDone }: { onDone: () => void }) {
 
 /* ---------------- 消息气泡 ---------------- */
 
+/** 生图消息的图片本体：从 IndexedDB 懒加载 dataURL */
+function ChatImage({ imageId, prompt, pending }: { imageId?: string; prompt: string; pending: boolean }) {
+  const [src, setSrc] = useState<string | null>(null);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    setSrc(null);
+    setFailed(false);
+    if (imageId) {
+      void loadImage(imageId).then((dataUrl) => {
+        if (cancelled) return;
+        if (dataUrl) setSrc(dataUrl);
+        else setFailed(true);
+      });
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [imageId]);
+
+  if (pending) {
+    return (
+      <div className="chat-image-pending">
+        <span className="chat-image-spinner">🎨</span> 正在画：{prompt.slice(0, 60)}
+      </div>
+    );
+  }
+  if (failed) return <div className="chat-image-pending">（这张图找不回来了，可能被浏览器清理）</div>;
+  if (!src) return <div className="chat-image-pending">图片加载中…</div>;
+  return <img className="chat-image" src={src} alt={prompt.slice(0, 60)} loading="lazy" />;
+}
+
 function Bubble({
   message,
   speakerName,
@@ -168,6 +203,7 @@ function Bubble({
   onRegenerate?: () => void;
 }) {
   const isUser = message.role === "user";
+  const isImage = message.kind === "image";
   return (
     <div className={`bubble-row ${isUser ? "mine" : ""}`}>
       {!isUser && speakerAvatar && <span className="avatar small">{speakerAvatar}</span>}
@@ -175,6 +211,8 @@ function Bubble({
         {!isUser && speakerName && <div className="msg-speaker">{speakerName}</div>}
         {isUser ? (
           message.content
+        ) : isImage ? (
+          <ChatImage imageId={message.imageId} prompt={message.content} pending={message.status === "streaming"} />
         ) : (
           <div
             className="md"
@@ -183,7 +221,12 @@ function Bubble({
             }}
           />
         )}
-        {message.status === "streaming" && message.content && <span className="stream-cursor">▋</span>}
+        {message.status === "streaming" && !isImage && message.content && <span className="stream-cursor">▋</span>}
+        {!isUser && message.status === "done" && !isImage && message.content && (
+          <button type="button" className="link-btn bubble-speak" onClick={() => speak(message.content)}>
+            🔊 朗读
+          </button>
+        )}
         {message.status === "error" && (
           <div className="bubble-error-detail">
             <span>{message.error}</span>
@@ -210,10 +253,14 @@ function Conversation({ character }: { character: Character }) {
   const updateCharacter = useCharactersStore((s) => s.updateCharacter);
   const api = useSettingsStore((s) => s.api);
   const nickname = useSettingsStore((s) => s.persona.nickname);
+  const voiceAutoSpeak = useSettingsStore((s) => s.voiceAutoSpeak);
+  const setVoiceAutoSpeak = useSettingsStore((s) => s.setVoiceAutoSpeak);
   const [draft, setDraft] = useState("");
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [memoryBusy, setMemoryBusy] = useState(false);
   const [memoryDraft, setMemoryDraft] = useState<string | null>(null);
+  const [listening, setListening] = useState(false);
+  const listenStopRef = useRef<(() => void) | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const visible = messages.slice(-visibleCount);
@@ -224,10 +271,46 @@ function Conversation({ character }: { character: Character }) {
     bottomRef.current?.scrollIntoView({ block: "end" });
   }, [messages.length, lastMessage?.content]);
 
+  // 离开会话时停掉朗读和听写
+  useEffect(
+    () => () => {
+      stopSpeaking();
+      listenStopRef.current?.();
+    },
+    [],
+  );
+
+  // 自动朗读：新的 AI 文字回复完成时朗读（生图消息不读）
+  useEffect(() => {
+    if (!voiceAutoSpeak) return;
+    if (lastMessage?.role === "assistant" && lastMessage.status === "done" && lastMessage.kind !== "image") {
+      speak(lastMessage.content);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lastMessage?.id, lastMessage?.status, voiceAutoSpeak]);
+
   // 开场白：会话为空时自动说第一句（清空记录后回到开场白）
   useEffect(() => {
     if (character.firstMessage) ensureFirstMessage(character.id, character.firstMessage);
   }, [character.id, character.firstMessage, messages.length, ensureFirstMessage]);
+
+  const toggleListening = () => {
+    if (listening) {
+      listenStopRef.current?.();
+      listenStopRef.current = null;
+      setListening(false);
+      return;
+    }
+    setListening(true);
+    listenStopRef.current = listen(
+      (text) => setDraft((current) => (current ? `${current} ${text}` : text)),
+      (error) => {
+        setListening(false);
+        listenStopRef.current = null;
+        if (error) bus.emit("notify", { kind: "error", title: "语音输入", body: error });
+      },
+    );
+  };
 
   const summarizeMemory = async () => {
     if (memoryBusy || generating || messages.length < 4) return;
@@ -258,6 +341,19 @@ function Conversation({ character }: { character: Character }) {
         <span className="avatar small">{character.avatar}</span>
         <span className="chat-room-name">{character.name}</span>
         <span className="chat-tools">
+          <button
+            type="button"
+            className={`icon-btn ${voiceAutoSpeak ? "icon-btn-on" : ""}`}
+            title={voiceAutoSpeak ? "自动朗读已开（点击关闭）" : "自动朗读 AI 回复"}
+            aria-label="自动朗读"
+            onClick={() => {
+              const next = !voiceAutoSpeak;
+              setVoiceAutoSpeak(next);
+              if (!next) stopSpeaking();
+            }}
+          >
+            {voiceAutoSpeak ? "🔊" : "🔇"}
+          </button>
           <button
             type="button"
             className="icon-btn"
@@ -325,9 +421,26 @@ function Conversation({ character }: { character: Character }) {
       </div>
 
       <footer className="chat-input-bar">
+        {asrSupported() && (
+          <button
+            type="button"
+            className={`icon-btn mic-btn ${listening ? "mic-btn-on" : ""}`}
+            title={listening ? "结束语音输入" : "语音输入"}
+            aria-label="语音输入"
+            onClick={toggleListening}
+          >
+            🎤
+          </button>
+        )}
         <input
           value={draft}
-          placeholder={generating ? "对方正在输入…" : `发消息给 ${character.name}`}
+          placeholder={
+            listening
+              ? "正在听…（说完点 🎤 结束）"
+              : generating
+                ? "对方正在输入…"
+                : `发消息给 ${character.name}（/画 xxx 可生图）`
+          }
           onChange={(event) => setDraft(event.target.value)}
           onKeyDown={(event) => {
             if (event.key === "Enter") submit();

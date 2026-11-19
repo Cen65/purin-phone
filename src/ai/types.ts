@@ -29,10 +29,24 @@ export interface ChatResult {
   content: string;
 }
 
+export interface ImageGenRequest extends ProviderConfig {
+  /** 生图模型（与聊天模型分开配置，见 settingsStore.imageModel） */
+  prompt: string;
+  /** 如 "1024x1024"；不传由服务端决定 */
+  size?: string;
+}
+
+export interface ImageGenResult {
+  /** 图片 data URL（base64），统一走本地 IndexedDB 存储 */
+  dataUrl: string;
+}
+
 export interface LLMProvider {
   id: string;
   label: string;
   chat(request: ChatRequest): Promise<ChatResult>;
+  /** 可选：文生图（OpenAI 兼容 /images/generations 协议，P4） */
+  generateImage?(request: ImageGenRequest): Promise<ImageGenResult>;
   listModels?(config: ProviderConfig, signal?: AbortSignal): Promise<string[]>;
   testConnection?(config: ProviderConfig): Promise<{ ok: boolean; message: string }>;
 }

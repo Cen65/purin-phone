@@ -9,12 +9,16 @@ import { useWorldbookStore } from "../state/worldbookStore";
 import { collectWorldbookContext, scanTextOf, type WorldbookContext } from "../core/worldbook";
 import { usePhoneStore } from "../state/phoneStore";
 import { bus } from "../core/events";
+import { saveImage } from "../core/imageStore";
 
 /**
  * 聊天执行器：把 UI（发送按钮）和 AI 层（provider.chat）串联起来。
  * UI 组件只调用 sendMessage / sendGroupMessage / regenerate / stopGeneration，
  * 不关心 provider 细节，也不管流式渲染。
  */
+
+/** /画 指令前缀（P4 生图） */
+const IMAGE_COMMAND = "/画 ";
 
 /** 每个会话同时最多一个进行中的请求（key = conversationId） */
 const controllers = new Map<string, AbortController>();
@@ -131,7 +135,67 @@ export async function sendMessage(characterId: string, text: string): Promise<vo
 
   stopped.delete(characterId);
   useChatStore.getState().addUserMessage(characterId, content);
+
+  // P4 生图：/画 一只在月光下打盹的猫 → 生成图片消息而不是文字回复
+  if (content.startsWith(IMAGE_COMMAND)) {
+    await runImageGeneration(characterId, content.slice(IMAGE_COMMAND.length).trim());
+    return;
+  }
   await runAssistant(characterId);
+}
+
+/** 单聊：调用生图接口，把结果落进 IndexedDB 并在会话里展示 */
+async function runImageGeneration(conversationId: string, prompt: string): Promise<void> {
+  const chat = useChatStore.getState();
+  const settings = useSettingsStore.getState();
+  if (!prompt) {
+    bus.emit("notify", { kind: "error", title: "画画指令缺了描述", body: "试试：/画 一只戴围巾的柴犬" });
+    return;
+  }
+  if (chat.generating[conversationId]) return;
+  if (!settings.imageModel.trim()) {
+    bus.emit("notify", {
+      appId: "settings",
+      kind: "error",
+      title: "还没有配置生图模型",
+      body: "打开设置，在 AI 服务里填写生图模型（如 Kwai-Kolors）",
+    });
+    usePhoneStore.getState().openApp("settings");
+    return;
+  }
+  const provider = getProvider(settings.api.provider) ?? getProvider("openai-compatible");
+  if (!provider?.generateImage) {
+    bus.emit("notify", { kind: "error", title: "当前 Provider 不支持生图" });
+    return;
+  }
+
+  const controller = new AbortController();
+  controllers.set(conversationId, controller);
+  const messageId = chat.startAssistant(conversationId, undefined, "image");
+  // content 存提示词，供 UI 展示与重试
+  useChatStore.getState().appendDelta(conversationId, messageId, prompt);
+  try {
+    const result = await provider.generateImage({
+      baseUrl: settings.api.baseUrl,
+      apiKey: settings.api.apiKey,
+      model: settings.imageModel.trim(),
+      prompt,
+    });
+    const imageId = await saveImage(result.dataUrl);
+    useChatStore.getState().setImageResult(conversationId, messageId, imageId);
+    bus.emit("notify", { appId: "chat", title: "图片已生成", body: prompt.slice(0, 60) });
+  } catch (error) {
+    if (isAbortError(error)) {
+      useChatStore.getState().finishAssistant(conversationId, messageId);
+      return;
+    }
+    const message = error instanceof Error ? error.message : String(error);
+    useChatStore.getState().failAssistant(conversationId, messageId, message);
+    bus.emit("notify", { kind: "error", title: "生图失败", body: message.slice(0, 80) });
+  } finally {
+    controllers.delete(conversationId);
+    stopped.delete(conversationId);
+  }
 }
 
 /** 以最近一条用户消息为输入，重新生成一条 AI 回复（单聊） */

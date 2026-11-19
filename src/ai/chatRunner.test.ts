@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { registerProvider } from "./providers";
 import { sendMessage, sendGroupMessage, stopGeneration } from "./chatRunner";
 import { useSettingsStore } from "../state/settingsStore";
@@ -6,11 +6,19 @@ import { useCharactersStore } from "../state/charactersStore";
 import { useGroupsStore, groupConversationId } from "../state/groupsStore";
 import { useChatStore } from "../state/chatStore";
 import { usePhoneStore } from "../state/phoneStore";
-import type { ChatRequest, LLMProvider } from "./types";
+import type { ChatRequest, ImageGenRequest, LLMProvider } from "./types";
 import type { Character, } from "../types";
+
+// 生图流程里 saveImage 走 IndexedDB（Node 无）：桩掉拿确定 imageId
+vi.mock("../core/imageStore", () => ({
+  saveImage: vi.fn(async () => "img-fixed"),
+  loadImage: vi.fn(async () => null),
+  deleteImage: vi.fn(async () => undefined),
+}));
 
 /** 测试桩：注册一个完全可控的 fake provider。 */
 let replier: (request: ChatRequest) => Promise<string> = async () => "ok";
+let imageReplier: (request: ImageGenRequest) => Promise<string> = async () => "data:image/png;base64,ZmFrZQ==";
 
 const fakeProvider: LLMProvider = {
   id: "fake",
@@ -20,6 +28,7 @@ const fakeProvider: LLMProvider = {
     request.onDelta?.(content);
     return { content };
   },
+  generateImage: async (request) => ({ dataUrl: await imageReplier(request) }),
 };
 registerProvider(fakeProvider);
 
@@ -30,10 +39,12 @@ const CONV = groupConversationId(GROUP_ID);
 
 beforeEach(() => {
   replier = async () => "ok";
+  imageReplier = async () => "data:image/png;base64,ZmFrZQ==";
   useSettingsStore.setState({
     api: { provider: "fake", baseUrl: "http://fake/v1", apiKey: "k", model: "m" },
     persona: { nickname: "小明" },
     windowSize: 20,
+    imageModel: "",
   });
   useCharactersStore.setState({ characters: [alice, bob] });
   useGroupsStore.setState({ groups: [{ id: GROUP_ID, name: "老友群", memberIds: [alice.id, bob.id], createdAt: 0 }] });
@@ -110,5 +121,53 @@ describe("未配置 API 时的守卫", () => {
     await sendGroupMessage(GROUP_ID, "大家好");
     expect(useChatStore.getState().messages[CONV]).toBeUndefined();
     expect(usePhoneStore.getState().activeAppId).toBe("settings");
+  });
+});
+
+/** P4 生图：/画 指令走 generateImage，不走 chat。 */
+describe("sendMessage /画 生图", () => {
+  it("生成图片消息：kind=image、content=提示词、imageId 落库", async () => {
+    useSettingsStore.setState({ imageModel: "kolors" });
+    let seenPrompt = "";
+    let seenModel = "";
+    imageReplier = async (request) => {
+      seenPrompt = request.prompt;
+      seenModel = request.model;
+      return "data:image/png;base64,AA==";
+    };
+    await sendMessage(alice.id, "/画 一只在月光下打盹的猫");
+    const messages = useChatStore.getState().messages[alice.id] ?? [];
+    expect(messages).toHaveLength(2);
+    expect(messages[0]).toMatchObject({ role: "user", content: "/画 一只在月光下打盹的猫" });
+    expect(messages[1]).toMatchObject({
+      role: "assistant",
+      kind: "image",
+      content: "一只在月光下打盹的猫",
+      imageId: "img-fixed",
+      status: "done",
+    });
+    expect(seenPrompt).toBe("一只在月光下打盹的猫");
+    expect(seenModel).toBe("kolors");
+    expect(useChatStore.getState().generating[alice.id]).toBe(false);
+  });
+
+  it("没配生图模型：提示并跳设置，不产生 AI 消息", async () => {
+    useSettingsStore.setState({ imageModel: "" });
+    usePhoneStore.setState({ activeAppId: "chat", params: {}, badges: {} });
+    await sendMessage(alice.id, "/画 一只猫");
+    const messages = useChatStore.getState().messages[alice.id] ?? [];
+    expect(messages.every((message) => message.role === "user")).toBe(true);
+    expect(usePhoneStore.getState().activeAppId).toBe("settings");
+  });
+
+  it("生图失败：气泡标错且释放 generating", async () => {
+    useSettingsStore.setState({ imageModel: "kolors" });
+    imageReplier = async () => {
+      throw new Error("content policy");
+    };
+    await sendMessage(alice.id, "/画 不合适的东西");
+    const messages = useChatStore.getState().messages[alice.id] ?? [];
+    expect(messages[messages.length - 1]).toMatchObject({ kind: "image", status: "error", error: "content policy" });
+    expect(useChatStore.getState().generating[alice.id]).toBe(false);
   });
 });

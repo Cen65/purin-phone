@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <!-- Purin 占位图标：焦糖布丁（用户后续替换为正式图标） -->
+  <defs>
+    <linearGradient id="caramel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e0a33c"/>
+      <stop offset="1" stop-color="#b9772a"/>
+    </linearGradient>
+    <linearGradient id="custard" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff3d9"/>
+      <stop offset="1" stop-color="#f5dfae"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="28" fill="#1a1410"/>
+  <ellipse cx="64" cy="46" rx="40" ry="16" fill="url(#caramel)"/>
+  <path d="M24 46c0 4 4 8 10 10v34c0 14 13 24 30 24s30-10 30-24V56c6-2 10-6 10-10C104 28 86 18 64 18S24 28 24 46z" fill="url(#custard)"/>
+  <path d="M34 60v30c0 11 12 19 30 19s30-8 30-19V60c-8 4-18 6-30 6s-22-2-30-6z" fill="url(#caramel)" opacity="0.25"/>
+  <circle cx="52" cy="42" r="3" fill="#fff8ea" opacity="0.8"/>
+</svg>

@@ -39,10 +39,14 @@ pnpm preview  # 预览构建产物
 | 深链路由 | `#/app/{id}?{params}` hash 同步，刷新还原、浏览器前进/后退 |
 | 多服务商 | Provider 抽象 + 注册表；常用预设一键填入（DeepSeek/OpenAI/Kimi/硅基流动/OpenRouter/Ollama） |
 | 主题 | CSS 变量主题系统，内置清白/夜色/抹茶/布丁/夜葡萄五套，`purin.theme` JSON 主题包导入导出 |
+| 生图 | 聊天里 `/画 xxx` 生成图片（设置里填生图模型，如 Kwai-Kolors）；图片存 IndexedDB，不占 localStorage |
+| 语音 | 自动朗读 AI 回复（🔊 开关）+ 🎤 语音输入（Web Speech API，Chrome/Edge） |
+| 备份 | 设置页一键导出/导入全量 JSON（角色/聊天/世界书/授权绑定），换设备可搬家 |
+| PWA | manifest + Service Worker：可安装到桌面/手机主屏，断网也能打开（图标为占位 SVG，待替换） |
 | 持久化 | zustand persist + localStorage 适配层（未来无痛换 IndexedDB） |
 | 事件总线 | 类型化事件解耦：聊天完成 → 通知 → 角标，App 之间零直接依赖 |
 | 商用接缝 | entitlement 授权抽象层：默认开放模式，可整体替换为激活码/账号服务器（[docs/COMMERCIAL-DESIGN.md](docs/COMMERCIAL-DESIGN.md)） |
-| 测试 | 107 个单测覆盖注册表 / SSE 解析 / 提示词组装(含世界书) / 聊天状态机 / 群聊执行器 / 角色卡解析 / 世界书解析 / 记忆合并 / 主题包 / 授权接缝 / 朋友圈 / 通话 |
+| 测试 | 121 个单测覆盖注册表 / SSE 解析 / 提示词组装(含世界书) / 聊天状态机 / 群聊与生图执行器 / 角色卡解析 / 世界书解析 / 记忆合并 / 主题包 / 授权接缝 / 备份恢复 / 朋友圈 / 通话 |
 
 ## 架构一览
 
@@ -71,15 +75,18 @@ pnpm preview  # 预览构建产物
 ```
 purin/
 ├─ docs/
-│  ├─ PLAN.md               # 分阶段发展计划（P0 底座 → P5 商用化；P1/P2 已完成）
+│  ├─ PLAN.md               # 分阶段发展计划（P0 底座 → P5 商用化；P1–P4 已完成）
 │  ├─ EXTENDING.md          # 扩展指南：新增 App / Provider / 主题 / 事件 / 授权
 │  └─ COMMERCIAL-DESIGN.md  # 商用设计：激活码 + 设备绑定 + 管理后台
 ├─ public/
-│  └─ commercial.json       # 商用开关：open=单机版 / licensed=激活码模式
+│  ├─ commercial.json       # 商用开关：open=单机版 / licensed=激活码模式
+│  ├─ manifest.webmanifest  # PWA 清单（安装到主屏）
+│  ├─ sw.js                 # Service Worker（静态缓存壳；commercial.json 与授权接口永远走网络）
+│  └─ icon*.svg             # 应用图标（占位布丁，欢迎替换成正式图标）
 ├─ src/
-│  ├─ ai/            # Provider 抽象、openai-compatible、预设、提示词(1v1/群/圈/通话)、运行器、创意生成、AI 捏人、记忆总结
+│  ├─ ai/            # Provider 抽象、openai-compatible(含生图)、预设、提示词(1v1/群/圈/通话)、运行器、创意生成、AI 捏人、记忆总结
 │  ├─ apps/          # App 注册表 + 内置 App（chat/contacts/worldbook/moments/notes/settings）
-│  ├─ core/          # 事件总线、id、存储适配、md 渲染、deeplink、下载、世界书解析、授权接缝、商用配置
+│  ├─ core/          # 事件总线、id、存储适配、md 渲染、deeplink、下载、世界书解析、授权接缝、商用配置、备份恢复、语音(TTS/ASR)、图片仓(IndexedDB)
 │  ├─ phone/         # 手机壳（状态栏/锁屏/通知面板/通话层/激活门，不含业务）
 │  ├─ state/         # zustand store（settings/characters/chat/groups/worldbooks/moments/phone/notifications/call）
 │  ├─ styles/        # global.css（全部样式，CSS 变量驱动）

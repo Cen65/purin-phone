@@ -123,8 +123,13 @@ registerProvider(echoProvider);
 ```
 
 注册后设置页的"服务商"下拉框会自动出现它，无需改任何 UI 代码。
-真实参考实现看 `src/ai/openaiCompatible.ts`（SSE 解析、整段 JSON 兼容、错误处理都有），
+真实参考实现看 `src/ai/openaiCompatible.ts`（SSE 解析、整段 JSON 兼容、生图、错误处理都有），
 单测看 `src/ai/openaiCompatible.test.ts`——新 Provider 建议照抄这组测试的骨架。
+
+可选能力 `generateImage(request) => Promise<{ dataUrl }>`：实现后聊天里的 `/画 xxx`
+指令会自动路由到它（用户在设置里填的「生图模型」就是 `request.model`），图片会统一
+存入 IndexedDB（`core/imageStore.ts`），消息里只保留 imageId。不实现则该 Provider
+没有生图能力，UI 会提示不支持。
 
 ---
 
@@ -229,7 +234,14 @@ export interface PhoneEvents {
 所有持久化都经过 `src/core/storage.ts` 的 `safeLocalStorage` 适配层。
 引入 Dexie（或手写 IndexedDB 适配）实现同样的 `StateStorage` 接口，
 替换 `createJSONStorage(safeLocalStorage)` 一处调用即可，各 store 无需改动。
-建议在 P2 阶段做，配套写一个旧数据迁移函数。
+配套写一个旧数据迁移函数。
+
+两个既有事实，迁移时注意：
+
+- **备份**（`core/backup.ts`）导出的是 localStorage 的 `purin.*` 键；store 迁去 IndexedDB 后
+  要同步扩展备份的打包/恢复范围。
+- **图片已经走 IndexedDB**（`core/imageStore.ts`，生图消息专用），迁移聊天文本时可参考其
+  打开/事务封装，但注意它没有做"批量读出全部键"的能力，通用化后再复用。
 
 ---
 

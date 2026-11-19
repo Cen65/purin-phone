@@ -20,10 +20,16 @@ interface SettingsState {
   themeId: string;
   /** 参与上下文的历史消息条数（P1：上下文策略，防止 token 超限） */
   windowSize: number;
+  /** 生图模型（P4）：留空 = 未启用 /画 指令 */
+  imageModel: string;
+  /** 自动朗读 AI 回复（P4：Web Speech TTS） */
+  voiceAutoSpeak: boolean;
   setApi: (patch: Partial<ApiSettings>) => void;
   setPersona: (patch: Partial<PersonaSettings>) => void;
   setThemeId: (themeId: string) => void;
   setWindowSize: (size: number) => void;
+  setImageModel: (model: string) => void;
+  setVoiceAutoSpeak: (on: boolean) => void;
 }
 
 const DEFAULT_API: ApiSettings = {
@@ -40,10 +46,14 @@ export const useSettingsStore = create<SettingsState>()(
       persona: { nickname: "" },
       themeId: "light",
       windowSize: 20,
+      imageModel: "",
+      voiceAutoSpeak: false,
       setApi: (patch) => set((state) => ({ api: { ...state.api, ...patch } })),
       setPersona: (patch) => set((state) => ({ persona: { ...state.persona, ...patch } })),
       setThemeId: (themeId) => set({ themeId }),
       setWindowSize: (size) => set({ windowSize: Math.min(100, Math.max(4, Math.round(size))) }),
+      setImageModel: (model) => set({ imageModel: model }),
+      setVoiceAutoSpeak: (on) => set({ voiceAutoSpeak: on }),
     }),
     {
       name: "purin.settings",

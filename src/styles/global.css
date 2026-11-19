@@ -1794,3 +1794,66 @@ button.link-btn {
   color: var(--c-danger);
 }
 
+/* ===== P4：生图消息 / 朗读 / 语音输入 ===== */
+.chat-image {
+  display: block;
+  max-width: 220px;
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid var(--c-border);
+}
+.chat-image-pending {
+  font-size: 13px;
+  color: var(--c-text-dim);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 60px;
+}
+.chat-image-spinner {
+  display: inline-block;
+  animation: image-painting 1.2s ease-in-out infinite;
+}
+@keyframes image-painting {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+.bubble-speak {
+  font-size: 11px;
+  padding: 2px 0 0;
+  opacity: 0.55;
+}
+.bubble-speak:hover {
+  opacity: 1;
+}
+.icon-btn-on {
+  background: var(--c-accent-soft);
+  border-color: var(--c-accent);
+}
+.mic-btn {
+  flex: 0 0 auto;
+}
+.mic-btn-on {
+  background: var(--c-danger);
+  color: #fff;
+  border-color: var(--c-danger);
+  animation: mic-pulse 1.4s ease-in-out infinite;
+}
+@keyframes mic-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgb(225 60 60 / 40%); }
+  50% { box-shadow: 0 0 0 6px rgb(225 60 60 / 0%); }
+}
+
+/* ===== P4：宽屏氛围（≥720px 给手机壳一个舞台） ===== */
+@media (min-width: 720px) {
+  body {
+    background:
+      radial-gradient(600px 400px at 15% 10%, color-mix(in srgb, var(--c-accent) 14%, transparent), transparent 70%),
+      radial-gradient(500px 350px at 85% 90%, color-mix(in srgb, var(--c-accent) 10%, transparent), transparent 70%),
+      var(--c-bg);
+  }
+  .phone-frame {
+    box-shadow: 0 30px 80px rgb(0 0 0 / 35%), 0 0 0 1px var(--c-border);
+  }
+}
+

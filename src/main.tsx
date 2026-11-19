@@ -47,6 +47,13 @@ async function bootstrap(): Promise<void> {
   // 5. hash 深链：地址栏 ↔ 打开的 App 双向同步
   initDeeplink();
 
+  // 6. PWA：生产构建注册 Service Worker（缓存静态壳，断网可开；commercial.json 永远走网络）
+  if (import.meta.env.PROD && "serviceWorker" in navigator) {
+    navigator.serviceWorker.register("/sw.js").catch((error: unknown) => {
+      console.warn("[pwa] Service Worker 注册失败", error);
+    });
+  }
+
   createRoot(document.getElementById("root")!).render(
     <StrictMode>
       <App />

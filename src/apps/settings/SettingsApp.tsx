@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { AppProps } from "../types";
 import { useSettingsStore } from "../../state/settingsStore";
 import { listProviders, getProvider } from "../../ai/providers";
@@ -6,6 +6,8 @@ import { PROVIDER_PRESETS } from "../../ai/presets";
 import { getThemes, getTheme, registerTheme, exportTheme, parseThemePack } from "../../theme/themes";
 import { ENTITLEMENT_STATUS_LABELS, getEntitlementProvider } from "../../core/entitlement";
 import { downloadTextFile } from "../../core/download";
+import { downloadBackup, restoreBackup } from "../../core/backup";
+import { speak, ttsSupported } from "../../core/tts";
 import { Section, Field } from "../ui";
 
 /**
@@ -17,10 +19,14 @@ export default function SettingsApp(_props: AppProps) {
   const persona = useSettingsStore((s) => s.persona);
   const themeId = useSettingsStore((s) => s.themeId);
   const windowSize = useSettingsStore((s) => s.windowSize);
+  const imageModel = useSettingsStore((s) => s.imageModel);
+  const voiceAutoSpeak = useSettingsStore((s) => s.voiceAutoSpeak);
   const setApi = useSettingsStore((s) => s.setApi);
   const setPersona = useSettingsStore((s) => s.setPersona);
   const setThemeId = useSettingsStore((s) => s.setThemeId);
   const setWindowSize = useSettingsStore((s) => s.setWindowSize);
+  const setImageModel = useSettingsStore((s) => s.setImageModel);
+  const setVoiceAutoSpeak = useSettingsStore((s) => s.setVoiceAutoSpeak);
 
   const [showKey, setShowKey] = useState(false);
   const [testing, setTesting] = useState(false);
@@ -31,6 +37,8 @@ export default function SettingsApp(_props: AppProps) {
   const [unbindMessage, setUnbindMessage] = useState<string | null>(null);
   const [themeImport, setThemeImport] = useState("");
   const [themeMessage, setThemeMessage] = useState<string | null>(null);
+  const [backupMessage, setBackupMessage] = useState<string | null>(null);
+  const backupFileRef = useRef<HTMLInputElement>(null);
 
   const applyImportedTheme = async () => {
     try {
@@ -174,6 +182,16 @@ export default function SettingsApp(_props: AppProps) {
             </button>
           </div>
         </Field>
+        <Field
+          label="生图模型（可选）"
+          hint="填了才能在聊天里用「/画 xxx」生图，例如 Kwai-Kolors、dall-e-3；留空 = 不启用"
+        >
+          <input
+            value={imageModel}
+            placeholder="例如 Kwai-Kolors / dall-e-3"
+            onChange={(event) => setImageModel(event.target.value.trim())}
+          />
+        </Field>
         <div className="inline-row">
           <button type="button" className="primary" onClick={() => void runTest()} disabled={testing}>
             {testing ? "测试中…" : "测试连接"}
@@ -201,6 +219,18 @@ export default function SettingsApp(_props: AppProps) {
               </option>
             ))}
           </select>
+        </Field>
+        <Field label="自动朗读回复" hint={ttsSupported() ? "用浏览器内置语音朗读 AI 回复，也可在聊天页顶部开关" : "当前浏览器不支持语音合成"}>
+          <div className="inline-row">
+            <button type="button" className="secondary" onClick={() => setVoiceAutoSpeak(!voiceAutoSpeak)}>
+              {voiceAutoSpeak ? "已开启（点击关闭）" : "已关闭（点击开启）"}
+            </button>
+            {ttsSupported() && (
+              <button type="button" className="secondary" onClick={() => speak("你好，我是你的小手机，很高兴认识你。")}>
+                试听语音
+              </button>
+            )}
+          </div>
         </Field>
       </Section>
 
@@ -244,6 +274,41 @@ export default function SettingsApp(_props: AppProps) {
             </button>
           </div>
           {themeMessage ? <p className="about-text">{themeMessage}</p> : null}
+        </Field>
+      </Section>
+
+      <Section title="备份与恢复">
+        <Field label="全量备份" hint="导出所有本地数据（角色、聊天、世界书、主题选择、授权绑定）为一个 JSON 文件，换设备/换浏览器时导入即可恢复">
+          <button type="button" className="primary" onClick={downloadBackup}>
+            导出备份文件
+          </button>
+        </Field>
+        <Field label="恢复备份" hint="导入备份会覆盖当前全部数据，然后自动刷新页面；聊天里的生图图片不在备份内">
+          <button type="button" className="secondary" onClick={() => backupFileRef.current?.click()}>
+            选择备份文件
+          </button>
+          <input
+            ref={backupFileRef}
+            type="file"
+            accept=".json,application/json"
+            className="hidden-file"
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              event.target.value = "";
+              if (!file) return;
+              void file
+                .text()
+                .then((json) => {
+                  const restored = restoreBackup(json);
+                  setBackupMessage(`已恢复 ${restored} 项数据，即将刷新页面…`);
+                  window.setTimeout(() => window.location.reload(), 800);
+                })
+                .catch((error: unknown) => {
+                  setBackupMessage(error instanceof Error ? error.message : String(error));
+                });
+            }}
+          />
+          {backupMessage ? <p className="about-text">{backupMessage}</p> : null}
         </Field>
       </Section>
 

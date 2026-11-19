@@ -139,3 +139,74 @@ describe("openaiCompatibleProvider.listModels", () => {
     );
   });
 });
+
+describe("openaiCompatibleProvider.generateImage", () => {
+  const generateImage = openaiCompatibleProvider.generateImage;
+
+  it("b64_json 直接转 dataURL，请求体带 prompt/model/response_format", async () => {
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ data: [{ b64_json: "QUJD" }] }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await generateImage!({
+      baseUrl: "https://api.example.com/v1",
+      apiKey: "sk-test",
+      model: "kolors",
+      prompt: "一只猫",
+      size: "1024x1024",
+    });
+    expect(result.dataUrl).toBe("data:image/png;base64,QUJD");
+    const call = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    expect(call[0]).toBe("https://api.example.com/v1/images/generations");
+    const body = JSON.parse(String(call[1].body));
+    expect(body).toMatchObject({ model: "kolors", prompt: "一只猫", response_format: "b64_json", size: "1024x1024" });
+  });
+
+  it("只回 url 时抓回文件转 dataURL", async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.endsWith("/images/generations")) {
+        return new Response(JSON.stringify({ data: [{ url: "https://cdn.example.com/img.png" }] }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        });
+      }
+      return new Response(new Blob(["pngbytes"], { type: "image/png" }), { status: 200 });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await generateImage!({
+      baseUrl: "https://api.example.com/v1",
+      apiKey: "sk-test",
+      model: "kolors",
+      prompt: "一只狗",
+    });
+    expect(result.dataUrl.startsWith("data:image/png;base64,")).toBe(true);
+  });
+
+  it("没有图片数据时抛错", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        async () =>
+          new Response(JSON.stringify({ data: [{}] }), {
+            status: 200,
+            headers: { "content-type": "application/json" },
+          }),
+      ),
+    );
+    await expect(
+      generateImage!({
+        baseUrl: "https://api.example.com/v1",
+        apiKey: "sk-test",
+        model: "kolors",
+        prompt: "x",
+      }),
+    ).rejects.toThrow("服务没有返回图片数据");
+  });
+});

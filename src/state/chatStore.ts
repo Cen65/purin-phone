@@ -15,6 +15,9 @@ export interface ChatMessage {
   error?: string;
   /** 群聊里发这条消息的角色 id（单聊为空，代表对面唯一角色） */
   speakerId?: string;
+  /** P4 生图：kind === "image" 时 content 是提示词，imageId 指向 IndexedDB 图片仓 */
+  kind?: "text" | "image";
+  imageId?: string;
 }
 
 interface ChatState {
@@ -23,12 +26,14 @@ interface ChatState {
   /** 会话是否正在生成（UI 据此禁用发送按钮） */
   generating: Record<string, boolean>;
   addUserMessage: (conversationId: string, content: string) => ChatMessage;
-  startAssistant: (conversationId: string, speakerId?: string) => string;
+  startAssistant: (conversationId: string, speakerId?: string, kind?: "text" | "image") => string;
   appendDelta: (conversationId: string, messageId: string, delta: string) => void;
   finishAssistant: (conversationId: string, messageId: string) => void;
   failAssistant: (conversationId: string, messageId: string, error: string) => void;
   /** 直接插入一条已完成的消息（通话转写等非流式来源） */
   insertMessage: (conversationId: string, role: "user" | "assistant", content: string, speakerId?: string) => void;
+  /** P4 生图：图片生成完成，落 imageId 并收尾（status 置 done） */
+  setImageResult: (conversationId: string, messageId: string, imageId: string) => void;
   /** 会话为空时插入开场白（原子检查，防 StrictMode 双跑；已有消息则忽略） */
   ensureFirstMessage: (conversationId: string, content: string) => void;
   clearConversation: (conversationId: string) => void;
@@ -54,7 +59,7 @@ export const useChatStore = create<ChatState>()(
         set((state) => ({ messages: append(state, conversationId, message) }));
         return message;
       },
-      startAssistant: (conversationId, speakerId) => {
+      startAssistant: (conversationId, speakerId, kind) => {
         const id = uid();
         const placeholder: ChatMessage = {
           id,
@@ -63,6 +68,7 @@ export const useChatStore = create<ChatState>()(
           createdAt: Date.now(),
           status: "streaming",
           speakerId,
+          ...(kind === "image" ? { kind: "image" as const } : {}),
         };
         set((state) => ({
           messages: append(state, conversationId, placeholder),
@@ -110,6 +116,16 @@ export const useChatStore = create<ChatState>()(
         };
         set((state) => ({ messages: append(state, conversationId, message) }));
       },
+      setImageResult: (conversationId, messageId, imageId) =>
+        set((state) => ({
+          messages: {
+            ...state.messages,
+            [conversationId]: (state.messages[conversationId] ?? []).map((message) =>
+              message.id === messageId ? { ...message, imageId, status: "done" as const } : message,
+            ),
+          },
+          generating: { ...state.generating, [conversationId]: false },
+        })),
       ensureFirstMessage: (conversationId, content) => {
         const text = content.trim();
         if (!text) return;
