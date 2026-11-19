@@ -9,6 +9,7 @@ import { collectWorldbookContext } from "../core/worldbook";
 import { usePhoneStore } from "../state/phoneStore";
 import { getProvider } from "./providers";
 import { buildMomentMessages, buildCallMessages } from "./prompt";
+import { saveImage } from "../core/imageStore";
 import { bus } from "../core/events";
 
 /**
@@ -41,6 +42,32 @@ function alwaysWorldbook(characterId: string): string {
   return collectWorldbookContext(books, "").system;
 }
 
+/**
+ * 朋友圈配图：配置了生图模型且开关打开时，顺手给动态生成一张图。
+ * 任何失败（没模型 / Provider 不支持 / 接口报错）都静默降级为纯文字——图是锦上添花。
+ */
+async function maybeMomentImage(character: { name: string; tagline: string }, text: string): Promise<string | undefined> {
+  const settings = useSettingsStore.getState();
+  if (!settings.momentImageOn) return undefined;
+  if (!settings.imageModel.trim()) return undefined;
+  const provider = getProvider(settings.api.provider) ?? getProvider("openai-compatible");
+  if (!provider?.generateImage) return undefined;
+  try {
+    const result = await provider.generateImage({
+      baseUrl: settings.api.baseUrl,
+      apiKey: settings.api.apiKey,
+      model: settings.imageModel.trim(),
+      prompt:
+        `朋友圈随手拍配图：${character.name}（${character.tagline || "普通朋友"}）刚发了动态「${text.slice(0, 60)}」。` +
+        "画面贴近这句话的日常生活场景，真实、随意、像手机拍的，不要出现文字和水印。",
+    });
+    const imageId = await saveImage(result.dataUrl);
+    return imageId || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 /** 让角色发一条朋友圈；未配置 API / 生成失败时返回 null（失败已通过 notify 提示） */
 export async function generateMoment(characterId: string): Promise<Moment | null> {
   const character = useCharactersStore.getState().characters.find((c) => c.id === characterId);
@@ -59,11 +86,13 @@ export async function generateMoment(characterId: string): Promise<Moment | null
       await chatOnce(buildMomentMessages(character, useSettingsStore.getState().persona, alwaysWorldbook(characterId)))
     ).slice(0, 200);
     if (!text) return null;
+    const imageId = await maybeMomentImage(character, text);
     const moment = useMomentsStore.getState().addMoment({
       authorId: character.id,
       authorName: character.name,
       authorAvatar: character.avatar,
       text,
+      imageId,
     });
     bus.emit("moments:posted", { momentId: moment.id, authorName: character.name });
     bus.emit("notify", { appId: "moments", title: `${character.name} 发了动态`, body: text.slice(0, 60) });

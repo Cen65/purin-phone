@@ -81,6 +81,20 @@ describe("buildSystemPrompt 记忆注入（P1）", () => {
     const prompt = buildSystemPrompt(character, { nickname: "" });
     expect(prompt).not.toContain("长期记忆");
   });
+
+  it("情感状态注入（好感度+心情），未初始化不出现", () => {
+    const withMood = buildSystemPrompt({ ...character, affection: 72, mood: "开心" }, { nickname: "" });
+    expect(withMood).toContain("好感度 72/100");
+    expect(withMood).toContain("亲近");
+    expect(withMood).toContain("心情：开心");
+    expect(withMood).toContain("绝不主动提及数值");
+    // 只有 mood 没有 affection 也注入（affection 显示默认 50）
+    const moodOnly = buildSystemPrompt({ ...character, mood: "有点低落" }, { nickname: "" });
+    expect(moodOnly).toContain("好感度 50/100");
+    expect(moodOnly).toContain("有点低落");
+    const plain = buildSystemPrompt(character, { nickname: "" });
+    expect(plain).not.toContain("好感度");
+  });
 });
 
 describe("buildGroupMessages 群聊映射（P1）", () => {

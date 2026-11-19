@@ -1,8 +1,20 @@
 import { describe, expect, it } from "vitest";
-import { EXTENSIONS, installApp, uninstallApp, registerInstalledExtensions } from "./extensions";
+import { EXTENSIONS, installApp, uninstallApp, registerInstalledExtensions, installRemoteApp, isReservedAppId } from "./extensions";
 import { getApp, getApps } from "./registry";
 import { useAppManagerStore } from "../state/appManagerStore";
 import { usePhoneStore } from "../state/phoneStore";
+
+const REMOTE_APP = {
+  id: "hello-remote",
+  name: "远程示例",
+  icon: "👋",
+  version: "0.1.0",
+  description: "远程目录里的示例应用",
+  category: "tools" as const,
+  order: 80,
+  blurb: "远程示例",
+  url: "https://example.com/purin-apps/hello/index.js",
+};
 
 describe("扩展目录与安装/卸载", () => {
   it("目录收录五个扩展，字段完整", () => {
@@ -42,5 +54,21 @@ describe("扩展目录与安装/卸载", () => {
 
   it("未上架的 id 安装失败", () => {
     expect(installApp("not-in-catalog")).toBe(false);
+  });
+
+  it("远程应用：安装后注册表可见并持久化入口；卸载一并清理", () => {
+    expect(installRemoteApp(REMOTE_APP)).toBe(true);
+    expect(getApp("hello-remote")?.name).toBe("远程示例");
+    expect(useAppManagerStore.getState().remote["hello-remote"]?.url).toBe(REMOTE_APP.url);
+    expect(installRemoteApp(REMOTE_APP)).toBe(false); // 重复安装拒绝
+    uninstallApp("hello-remote");
+    expect(getApp("hello-remote")).toBeUndefined();
+    expect(useAppManagerStore.getState().remote["hello-remote"]).toBeUndefined();
+  });
+
+  it("远程应用不允许覆盖本地货架 id", () => {
+    expect(installRemoteApp({ ...REMOTE_APP, id: "weather" })).toBe(false);
+    expect(isReservedAppId("moments")).toBe(true); // 已注册的本地扩展
+    expect(isReservedAppId("brand-new-id")).toBe(false);
   });
 });

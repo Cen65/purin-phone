@@ -88,6 +88,28 @@ todo: {
 - 安装状态持久化在 `purin.apps`，启动时 `registerInstalledExtensions()` 自动装回。
 - 想默认预装（像朋友圈/便签/世界书那样），把 id 加进 `src/state/appManagerStore.ts` 的默认 `installed` 列表。
 
+### 远程应用目录（第三方上架）
+
+商店页底部可以填一个**目录 JSON** 的 URL，加载后直接安装第三方 ESM App（不用改 Purin 源码、不用重新构建）：
+
+```json
+{
+  "type": "purin.app-catalog",
+  "version": 1,
+  "apps": [
+    { "id": "hello", "name": "打招唿", "icon": "👋", "version": "0.1.0",
+      "category": "tools", "order": 80, "blurb": "远程小玩意",
+      "url": "https://你的域名/purin-apps/hello/index.js" }
+  ]
+}
+```
+
+- 每个条目的 `url` 指向一个 **ESM 模块**，`default export` 一个 `ComponentType<AppProps>`（契约同 §1 的 App 组件）。
+- 字段校验与归一在 `src/apps/catalog.ts`（`parseAppCatalog`）：id 小写字母数字连字符、url 必须 http(s)，非法条目整条跳过。
+- 安装走 `installRemoteApp`：注册懒加载 `import(/* @vite-ignore */ url)`，并把清单快照写进 `purin.apps` 的 `remote` 记录，重启自动装回；与本地货架 id 冲突会拒绝。
+- **注意 CORS**：模块 URL 和目录 URL 都需要允许 Purin 页面跨域加载（`Access-Control-Allow-Origin`），静态托管配好响应头即可。
+
+
 ### App 能拿到什么
 
 | 能力 | 用法 |

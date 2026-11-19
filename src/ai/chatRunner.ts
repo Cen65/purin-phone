@@ -12,6 +12,7 @@ import { bus } from "../core/events";
 import { saveImage } from "../core/imageStore";
 import { maybeAutoConsolidate } from "./memory";
 import { pickSpeakers } from "./groupStrategy";
+import { applyAffectionFromMessage } from "./affection";
 
 /**
  * 聊天执行器：把 UI（发送按钮）和 AI 层（provider.chat）串联起来。
@@ -139,6 +140,8 @@ export async function sendMessage(characterId: string, text: string): Promise<vo
 
   stopped.delete(characterId);
   useChatStore.getState().addUserMessage(characterId, content);
+  // 情感模型：由这条消息更新好感/心情（纯关键词推导，零 API 成本）
+  applyAffectionFromMessage(characterId, content);
 
   // P4 生图：/画 一只在月光下打盹的猫 → 生成图片消息而不是文字回复
   if (content.startsWith(IMAGE_COMMAND)) {

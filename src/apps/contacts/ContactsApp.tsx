@@ -12,6 +12,7 @@ import { useCallStore } from "../../state/callStore";
 import { usePhoneStore } from "../../state/phoneStore";
 import { useSettingsStore, isApiReady } from "../../state/settingsStore";
 import { forgeCharacter } from "../../ai/characterForge";
+import { affectionStage } from "../../ai/affection";
 import { downloadTextFile } from "../../core/download";
 import { bus } from "../../core/events";
 import { EmptyHint } from "../ui";
@@ -169,6 +170,7 @@ function CharacterEditor({ characterId, onDone }: { characterId: string | null; 
     proactiveEnabled: character?.proactiveEnabled !== false,
     sleepFrom: character?.sleepFrom ?? "",
     sleepTo: character?.sleepTo ?? "",
+    affection: character?.affection ?? 50,
   });
 
   const save = () => {
@@ -293,6 +295,20 @@ function CharacterEditor({ characterId, onDone }: { characterId: string | null; 
             {draft.proactiveEnabled === false ? "已关闭（点击开启）" : "已开启（点击关闭）"}
           </button>
         </div>
+      </label>
+      <label className="field">
+        <span className="field-label">
+          好感度：{draft.affection ?? 50} / 100（{affectionStage(draft.affection ?? 50)}）
+        </span>
+        <input
+          type="range"
+          min={0}
+          max={100}
+          step={1}
+          value={draft.affection ?? 50}
+          onChange={(event) => setDraft({ ...draft, affection: Number(event.target.value) })}
+        />
+        <span className="field-hint">影响 TA 的语气和热情程度；聊天时会随你的话自动涨落，心情由最近的话题决定。</span>
       </label>
       <div className="editor-row">
         <label className="field">

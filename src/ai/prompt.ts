@@ -4,6 +4,7 @@ import type { PersonaSettings } from "../state/settingsStore";
 import type { ChatMessage } from "../state/chatStore";
 import type { CallLine } from "../state/callStore";
 import type { WorldbookContext } from "../core/worldbook";
+import { affectionStage } from "./affection";
 
 /**
  * Prompt 组装：角色设定 + 用户画像 + 滑动窗口历史 → LLM messages。
@@ -32,6 +33,14 @@ function characterLines(character: Character): string[] {
   if (character.impression?.trim()) {
     lines.push(
       `你对用户的印象（你眼中的 TA，让它自然体现在态度和亲疏里，不要复述出来）：\n${character.impression.trim()}`,
+    );
+  }
+  if (typeof character.affection === "number" || character.mood?.trim()) {
+    const affection = typeof character.affection === "number" ? character.affection : 50;
+    const mood = character.mood?.trim() || "平静";
+    lines.push(
+      `当前状态：你对用户的好感度 ${affection}/100（${affectionStage(affection)}）；你现在的心情：${mood}。` +
+        "让它们自然体现在语气和热情程度——好感高时更亲近主动，低时更冷淡简短。绝不主动提及数值、「好感度」或「心情」这些词。",
     );
   }
   if (character.exampleDialogue?.trim()) {

@@ -379,6 +379,9 @@ function Conversation({ character }: { character: Character }) {
         </button>
         <span className="avatar small">{character.avatar}</span>
         <span className="chat-room-name">{character.name}</span>
+        <span className="affection-chip" title="好感度与心情（随聊天自动变化，可在联系人编辑里调整）">
+          💗 {character.affection ?? 50} · {character.mood ?? "平静"}
+        </span>
         <span className="chat-tools">
           <button
             type="button"

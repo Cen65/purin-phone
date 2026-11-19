@@ -26,6 +26,8 @@ interface SettingsState {
   voiceAutoSpeak: boolean;
   /** 记忆自动巩固（P4.5）：聊过一段后自动把新对话并进角色长期记忆 */
   memoryAuto: boolean;
+  /** 朋友圈配图：角色发圈时顺手生成一张图（需配置生图模型，失败不影响发文字） */
+  momentImageOn: boolean;
   setApi: (patch: Partial<ApiSettings>) => void;
   setPersona: (patch: Partial<PersonaSettings>) => void;
   setThemeId: (themeId: string) => void;
@@ -33,6 +35,7 @@ interface SettingsState {
   setImageModel: (model: string) => void;
   setVoiceAutoSpeak: (on: boolean) => void;
   setMemoryAuto: (on: boolean) => void;
+  setMomentImageOn: (on: boolean) => void;
 }
 
 const DEFAULT_API: ApiSettings = {
@@ -52,6 +55,7 @@ export const useSettingsStore = create<SettingsState>()(
       imageModel: "",
       voiceAutoSpeak: false,
       memoryAuto: true,
+      momentImageOn: true,
       setApi: (patch) => set((state) => ({ api: { ...state.api, ...patch } })),
       setPersona: (patch) => set((state) => ({ persona: { ...state.persona, ...patch } })),
       setThemeId: (themeId) => set({ themeId }),
@@ -59,6 +63,7 @@ export const useSettingsStore = create<SettingsState>()(
       setImageModel: (model) => set({ imageModel: model }),
       setVoiceAutoSpeak: (on) => set({ voiceAutoSpeak: on }),
       setMemoryAuto: (on) => set({ memoryAuto: on }),
+      setMomentImageOn: (on) => set({ momentImageOn: on }),
     }),
     {
       name: "purin.settings",

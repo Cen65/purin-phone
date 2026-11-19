@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { AppProps } from "../types";
 import { useMomentsStore, relativeTime, type Moment } from "../../state/momentsStore";
 import { useCharactersStore } from "../../state/charactersStore";
 import { useSettingsStore, isApiReady } from "../../state/settingsStore";
 import { generateMoment } from "../../ai/creative";
 import { usePhoneStore } from "../../state/phoneStore";
-import { EmptyHint } from "../ui";
+import { saveImage } from "../../core/imageStore";
+import { EmptyHint, AsyncImage } from "../ui";
 
 /**
  * 朋友圈 App（P2）：角色和"我"都能发动态；可点赞、评论。
@@ -21,6 +22,20 @@ export default function MomentsApp(_props: AppProps) {
   const [generating, setGenerating] = useState(false);
   const [draft, setDraft] = useState("");
   const [composing, setComposing] = useState(false);
+  const [photoId, setPhotoId] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  async function pickPhoto(file: File) {
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = () => reject(new Error("读图失败"));
+      reader.readAsDataURL(file);
+    }).catch(() => "");
+    if (!dataUrl) return;
+    const imageId = await saveImage(dataUrl);
+    if (imageId) setPhotoId(imageId);
+  }
 
   async function randomPost() {
     if (generating || characters.length === 0) return;
@@ -40,8 +55,9 @@ export default function MomentsApp(_props: AppProps) {
   function postMine() {
     const text = draft.trim();
     if (!text) return;
-    addMoment({ authorId: "me", authorName: "我", authorAvatar: "🙂", text });
+    addMoment({ authorId: "me", authorName: "我", authorAvatar: "🙂", text, imageId: photoId ?? undefined });
     setDraft("");
+    setPhotoId(null);
     setComposing(false);
   }
 
@@ -67,6 +83,31 @@ export default function MomentsApp(_props: AppProps) {
             placeholder="这一刻的想法……（可以带 #话题）"
             onChange={(e) => setDraft(e.target.value)}
           />
+          <div className="composer-photo-row">
+            {photoId ? (
+              <div className="composer-photo">
+                <AsyncImage imageId={photoId} className="composer-photo-img" alt="待发配图" />
+                <button type="button" className="icon-btn composer-photo-remove" aria-label="移除配图" onClick={() => setPhotoId(null)}>
+                  ✕
+                </button>
+              </div>
+            ) : (
+              <button type="button" className="secondary" onClick={() => fileRef.current?.click()}>
+                📷 配张图
+              </button>
+            )}
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              className="hidden-file"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) void pickPhoto(file);
+                e.target.value = "";
+              }}
+            />
+          </div>
           <button type="button" className="primary" disabled={!draft.trim()} onClick={postMine}>
             发表
           </button>
@@ -131,6 +172,7 @@ function MomentCard({ moment }: { moment: Moment }) {
           ),
         )}
       </p>
+      {moment.imageId && <AsyncImage imageId={moment.imageId} className="moment-photo" alt="动态配图" />}
       <div className="moment-foot">
         <button type="button" className={`moment-like ${liked ? "moment-like-on" : ""}`} onClick={() => toggleLike(moment.id, "me")}>
           {liked ? "❤️" : "🤍"} {moment.likes.length > 0 ? moment.likes.length : ""}

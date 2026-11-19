@@ -23,6 +23,7 @@ export default function SettingsApp(_props: AppProps) {
   const imageModel = useSettingsStore((s) => s.imageModel);
   const voiceAutoSpeak = useSettingsStore((s) => s.voiceAutoSpeak);
   const memoryAuto = useSettingsStore((s) => s.memoryAuto);
+  const momentImageOn = useSettingsStore((s) => s.momentImageOn);
   const engineOn = useProactiveStore((s) => s.engineOn);
   const gapMinutes = useProactiveStore((s) => s.gapMinutes);
   const momentsOn = useProactiveStore((s) => s.momentsOn);
@@ -38,6 +39,7 @@ export default function SettingsApp(_props: AppProps) {
   const setImageModel = useSettingsStore((s) => s.setImageModel);
   const setVoiceAutoSpeak = useSettingsStore((s) => s.setVoiceAutoSpeak);
   const setMemoryAuto = useSettingsStore((s) => s.setMemoryAuto);
+  const setMomentImageOn = useSettingsStore((s) => s.setMomentImageOn);
 
   const [showKey, setShowKey] = useState(false);
   const [testing, setTesting] = useState(false);
@@ -258,6 +260,13 @@ export default function SettingsApp(_props: AppProps) {
                 </option>
               ))}
             </select>
+          </div>
+        </Field>
+        <Field label="朋友圈配图" hint="角色发圈时顺手生成一张配图（需在 AI 服务里配置生图模型；生成失败则发纯文字）">
+          <div className="inline-row">
+            <button type="button" className="secondary" onClick={() => setMomentImageOn(!momentImageOn)}>
+              {momentImageOn ? "已开启（点击关闭）" : "已关闭（点击开启）"}
+            </button>
           </div>
         </Field>
         <Field label="上下文条数" hint="每次请求带给 AI 的最近消息条数；更省额度调小，更记得住前文调大">

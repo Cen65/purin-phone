@@ -23,6 +23,8 @@ export interface Moment {
   authorName: string;
   authorAvatar: string;
   text: string;
+  /** 配图（IndexedDB 图片 id，见 core/imageStore.ts；没有则纯文字） */
+  imageId?: string;
   /** 从正文里解析出的 #话题 */
   tags: string[];
   /** 点赞者 id（"me" 或角色 id） */
@@ -36,6 +38,7 @@ export interface MomentDraft {
   authorName: string;
   authorAvatar: string;
   text: string;
+  imageId?: string;
 }
 
 const MAX_MOMENTS = 200;
@@ -63,6 +66,7 @@ export const useMomentsStore = create<MomentsState>()(
           authorName: draft.authorName,
           authorAvatar: draft.authorAvatar,
           text: draft.text.trim(),
+          imageId: draft.imageId,
           tags: parseTags(draft.text),
           likes: [],
           comments: [],
