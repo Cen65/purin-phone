@@ -23,6 +23,8 @@ export default function SettingsApp(_props: AppProps) {
   const imageModel = useSettingsStore((s) => s.imageModel);
   const voiceAutoSpeak = useSettingsStore((s) => s.voiceAutoSpeak);
   const memoryAuto = useSettingsStore((s) => s.memoryAuto);
+  const impressionAuto = useSettingsStore((s) => s.impressionAuto);
+  const affectionLlm = useSettingsStore((s) => s.affectionLlm);
   const momentImageOn = useSettingsStore((s) => s.momentImageOn);
   const engineOn = useProactiveStore((s) => s.engineOn);
   const gapMinutes = useProactiveStore((s) => s.gapMinutes);
@@ -39,6 +41,8 @@ export default function SettingsApp(_props: AppProps) {
   const setImageModel = useSettingsStore((s) => s.setImageModel);
   const setVoiceAutoSpeak = useSettingsStore((s) => s.setVoiceAutoSpeak);
   const setMemoryAuto = useSettingsStore((s) => s.setMemoryAuto);
+  const setImpressionAuto = useSettingsStore((s) => s.setImpressionAuto);
+  const setAffectionLlm = useSettingsStore((s) => s.setAffectionLlm);
   const setMomentImageOn = useSettingsStore((s) => s.setMomentImageOn);
 
   const [showKey, setShowKey] = useState(false);
@@ -242,6 +246,20 @@ export default function SettingsApp(_props: AppProps) {
           <div className="inline-row">
             <button type="button" className="secondary" onClick={() => setMemoryAuto(!memoryAuto)}>
               {memoryAuto ? "已开启（点击关闭）" : "已关闭（点击开启）"}
+            </button>
+          </div>
+        </Field>
+        <Field label="印象自动巩固" hint="攒够约 24 条新对话后，自动刷新「TA 眼中的你」并注入提示词（也可在聊天里手动点 👁）">
+          <div className="inline-row">
+            <button type="button" className="secondary" onClick={() => setImpressionAuto(!impressionAuto)}>
+              {impressionAuto ? "已开启（点击关闭）" : "已关闭（点击开启）"}
+            </button>
+          </div>
+        </Field>
+        <Field label="好感度 LLM 打分" hint="让模型理解讽刺和反话，好感度变化更自然；开启后每轮回复多一次小请求。关闭 = 关键词法（零成本）">
+          <div className="inline-row">
+            <button type="button" className="secondary" onClick={() => setAffectionLlm(!affectionLlm)}>
+              {affectionLlm ? "已开启（点击关闭）" : "已关闭（点击开启）"}
             </button>
           </div>
         </Field>

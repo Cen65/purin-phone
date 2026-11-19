@@ -9,7 +9,7 @@ import { collectWorldbookContext } from "../core/worldbook";
 import { usePhoneStore } from "../state/phoneStore";
 import { getProvider } from "./providers";
 import { buildMomentMessages, buildCallMessages } from "./prompt";
-import { saveImage } from "../core/imageStore";
+import { saveImage, loadImages } from "../core/imageStore";
 import { bus } from "../core/events";
 
 /**
@@ -46,13 +46,20 @@ function alwaysWorldbook(characterId: string): string {
  * 朋友圈配图：配置了生图模型且开关打开时，顺手给动态生成一张图。
  * 任何失败（没模型 / Provider 不支持 / 接口报错）都静默降级为纯文字——图是锦上添花。
  */
-async function maybeMomentImage(character: { name: string; tagline: string }, text: string): Promise<string | undefined> {
+async function maybeMomentImage(
+  character: { name: string; tagline: string; referenceImageIds?: string[] },
+  text: string,
+): Promise<string | undefined> {
   const settings = useSettingsStore.getState();
   if (!settings.momentImageOn) return undefined;
   if (!settings.imageModel.trim()) return undefined;
   const provider = getProvider(settings.api.provider) ?? getProvider("openai-compatible");
   if (!provider?.generateImage) return undefined;
   try {
+    // 锁脸：角色挂了参考图就一并交给模型（Provider 不支持会自动忽略）
+    const reference = character.referenceImageIds?.length
+      ? await loadImages(character.referenceImageIds)
+      : undefined;
     const result = await provider.generateImage({
       baseUrl: settings.api.baseUrl,
       apiKey: settings.api.apiKey,
@@ -60,6 +67,7 @@ async function maybeMomentImage(character: { name: string; tagline: string }, te
       prompt:
         `朋友圈随手拍配图：${character.name}（${character.tagline || "普通朋友"}）刚发了动态「${text.slice(0, 60)}」。` +
         "画面贴近这句话的日常生活场景，真实、随意、像手机拍的，不要出现文字和水印。",
+      ...(reference?.length ? { reference } : {}),
     });
     const imageId = await saveImage(result.dataUrl);
     return imageId || undefined;

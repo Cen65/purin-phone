@@ -209,4 +209,57 @@ describe("openaiCompatibleProvider.generateImage", () => {
       }),
     ).rejects.toThrow("服务没有返回图片数据");
   });
+
+  it("锁脸：带参考图走 /images/edits（multipart，不带 JSON Content-Type），提示词附一致性要求", async () => {
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ data: [{ b64_json: "QUJD" }] }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const tinyPng = "data:image/png;base64,QUJD"; // "ABC"
+    const result = await generateImage!({
+      baseUrl: "https://api.example.com/v1",
+      apiKey: "sk-test",
+      model: "gpt-image-1",
+      prompt: "TA 在咖啡馆看书",
+      reference: [tinyPng, tinyPng, tinyPng, tinyPng, tinyPng], // 5 张 → 只带 4 张
+    });
+    expect(result.dataUrl).toBe("data:image/png;base64,QUJD");
+    const call = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    expect(call[0]).toBe("https://api.example.com/v1/images/edits");
+    // multipart：不能手设 Content-Type（要让浏览器生成 boundary）
+    const headers = call[1].headers as Record<string, string>;
+    expect(headers["Content-Type"]).toBeUndefined();
+    expect(headers["Authorization"]).toBe("Bearer sk-test");
+    const form = call[1].body as FormData;
+    expect(form).toBeInstanceOf(FormData);
+    expect(form.getAll("image")).toHaveLength(4);
+    expect(String(form.get("prompt"))).toContain("保持参考图中人物");
+    expect(form.get("model")).toBe("gpt-image-1");
+  });
+
+  it("锁脸：无参考图仍走 /images/generations（JSON）", async () => {
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ data: [{ b64_json: "QUJD" }] }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    await generateImage!({
+      baseUrl: "https://api.example.com/v1",
+      apiKey: "sk-test",
+      model: "kolors",
+      prompt: "x",
+      reference: [],
+    });
+    const call = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    expect(call[0]).toBe("https://api.example.com/v1/images/generations");
+    expect(typeof call[1].body).toBe("string"); // JSON.stringify 的产物
+  });
 });

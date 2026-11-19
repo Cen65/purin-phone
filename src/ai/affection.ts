@@ -1,5 +1,8 @@
 import type { Character } from "../types";
+import type { LLMMessage } from "./types";
 import { useCharactersStore } from "../state/charactersStore";
+import { chatOnce } from "./creative";
+import { useSettingsStore, isApiReady } from "../state/settingsStore";
 
 /**
  * 情感模型（轻量确定性版）：
@@ -74,4 +77,90 @@ export function applyAffectionFromMessage(characterId: string, text: string): Af
   const state = nextAffectionState(text, character);
   store.updateCharacter(characterId, state);
   return state;
+}
+
+/* ===================== LLM 打分版（可选增强） ===================== */
+
+export const AFFECTION_LLM_WINDOW = 10;
+/** LLM 打分单条限幅：比关键词版宽松（模型看得懂讽刺和反话），但仍防大跳 */
+export const AFFECTION_LLM_MAX_DELTA = 6;
+
+/** 打分提示词：只输出 JSON（delta + mood + reason） */
+export function buildAffectionScoreMessages(
+  character: Character,
+  nickname: string,
+  userText: string,
+  assistantText: string,
+): LLMMessage[] {
+  const me = nickname.trim() || "用户";
+  return [
+    {
+      role: "system",
+      content: [
+        `你是「${character.name}」的情感状态评估器。评估刚发生的一轮对话对你的好感度影响。`,
+        `当前好感度 ${character.affection ?? AFFECTION_DEFAULT}/100。`,
+        "只输出 JSON：{\"delta\": 整数(-6~6), \"mood\": \"两个字以内的心情词\", \"reason\": \"10字以内原因\"}。",
+        "delta 判断依据：被关心/被夸/聊得投机 → 正；被冷落/被怼/说错话 → 负；普通闲聊 → 0 或 ±1。",
+        "mood 用你此刻的心情词（如 开心/平静/委屈/烦躁/雀跃）。",
+      ].join("\n"),
+    },
+    {
+      role: "user",
+      content: `${me}：${userText}\n${character.name}（你）：${assistantText}`,
+    },
+  ];
+}
+
+/** 解析模型打分输出（容错：切片找 JSON，字段非法时返回 null） */
+export function parseAffectionScore(raw: string): { delta: number; mood: string } | null {
+  const start = raw.indexOf("{");
+  const end = raw.lastIndexOf("}");
+  if (start < 0 || end <= start) return null;
+  try {
+    const parsed = JSON.parse(raw.slice(start, end + 1)) as { delta?: unknown; mood?: unknown };
+    if (typeof parsed.delta !== "number" || !Number.isFinite(parsed.delta)) return null;
+    const delta = Math.max(-AFFECTION_LLM_MAX_DELTA, Math.min(AFFECTION_LLM_MAX_DELTA, Math.round(parsed.delta)));
+    const mood = typeof parsed.mood === "string" && parsed.mood.trim() ? parsed.mood.trim().slice(0, 6) : nextMood(delta);
+    return { delta, mood };
+  } catch {
+    return null;
+  }
+}
+
+/** 应用一轮打分结果（纯函数，供测试） */
+export function applyScoredState(
+  character: Character,
+  score: { delta: number; mood: string },
+): AffectionState {
+  const base = typeof character.affection === "number" ? character.affection : AFFECTION_DEFAULT;
+  return { affection: clampAffection(base + score.delta), mood: score.mood };
+}
+
+/**
+ * 回复完成后异步打分并落库（fire-and-forget）。
+ * - settings.affectionLlm 开着才走这条路（此时发送路径跳过关键词法，避免双计）；
+ * - 失败静默（console.warn），不打扰聊天。
+ */
+export async function scoreAffectionRound(
+  characterId: string,
+  userText: string,
+  assistantText: string,
+): Promise<AffectionState | null> {
+  const character = useCharactersStore.getState().characters.find((c) => c.id === characterId);
+  if (!character) return null;
+  const settings = useSettingsStore.getState();
+  if (!settings.affectionLlm || !isApiReady(settings.api)) return null;
+  try {
+    const raw = await chatOnce(
+      buildAffectionScoreMessages(character, settings.persona.nickname, userText, assistantText),
+    );
+    const score = parseAffectionScore(raw);
+    if (!score) return null;
+    const state = applyScoredState(character, score);
+    useCharactersStore.getState().updateCharacter(characterId, state);
+    return state;
+  } catch (error) {
+    console.warn("[affection] LLM 打分失败，本轮跳过", error);
+    return null;
+  }
 }

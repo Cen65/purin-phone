@@ -11,8 +11,10 @@ import { usePhoneStore } from "../state/phoneStore";
 import { bus } from "../core/events";
 import { saveImage } from "../core/imageStore";
 import { maybeAutoConsolidate } from "./memory";
+import { maybeAutoImpression } from "./impression";
 import { pickSpeakers } from "./groupStrategy";
-import { applyAffectionFromMessage } from "./affection";
+import { applyAffectionFromMessage, scoreAffectionRound } from "./affection";
+import { loadImages } from "../core/imageStore";
 
 /**
  * 聊天执行器：把 UI（发送按钮）和 AI 层（provider.chat）串联起来。
@@ -117,6 +119,14 @@ async function runAssistant(characterId: string): Promise<void> {
     }
     // 记忆自动巩固：后台检查，条件不满足直接返回（见 ai/memory.ts）
     void maybeAutoConsolidate(characterId);
+    // 印象档案自动巩固：同款节奏但更疏（见 ai/impression.ts）
+    void maybeAutoImpression(characterId);
+    // 好感度 LLM 打分（开着时发送路径已跳过关键词法，这里补上更细腻的一轮）
+    if (useSettingsStore.getState().affectionLlm) {
+      const history = useChatStore.getState().messages[characterId] ?? [];
+      const lastUser = [...history].reverse().find((message) => message.role === "user");
+      if (lastUser) void scoreAffectionRound(characterId, lastUser.content, result.content);
+    }
   } catch (error) {
     if (isAbortError(error)) {
       // 用户主动停止：保留半截内容，静默收场
@@ -140,8 +150,10 @@ export async function sendMessage(characterId: string, text: string): Promise<vo
 
   stopped.delete(characterId);
   useChatStore.getState().addUserMessage(characterId, content);
-  // 情感模型：由这条消息更新好感/心情（纯关键词推导，零 API 成本）
-  applyAffectionFromMessage(characterId, content);
+  // 情感模型：LLM 打分开着时等回复完成后由模型打分（避免双计），否则用关键词法
+  if (!useSettingsStore.getState().affectionLlm) {
+    applyAffectionFromMessage(characterId, content);
+  }
 
   // P4 生图：/画 一只在月光下打盹的猫 → 生成图片消息而不是文字回复
   if (content.startsWith(IMAGE_COMMAND)) {
@@ -182,11 +194,17 @@ async function runImageGeneration(conversationId: string, prompt: string): Promi
   // content 存提示词，供 UI 展示与重试
   useChatStore.getState().appendDelta(conversationId, messageId, prompt);
   try {
+    // 锁脸：角色挂了参考图就一并交给模型（Provider 不支持会自动忽略）
+    const character = resolveCharacter(conversationId);
+    const reference = character?.referenceImageIds?.length
+      ? await loadImages(character.referenceImageIds)
+      : undefined;
     const result = await provider.generateImage({
       baseUrl: settings.api.baseUrl,
       apiKey: settings.api.apiKey,
       model: settings.imageModel.trim(),
       prompt,
+      ...(reference?.length ? { reference } : {}),
     });
     const imageId = await saveImage(result.dataUrl);
     useChatStore.getState().setImageResult(conversationId, messageId, imageId);

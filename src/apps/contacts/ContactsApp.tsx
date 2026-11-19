@@ -14,8 +14,9 @@ import { useSettingsStore, isApiReady } from "../../state/settingsStore";
 import { forgeCharacter } from "../../ai/characterForge";
 import { affectionStage } from "../../ai/affection";
 import { downloadTextFile } from "../../core/download";
+import { saveImage } from "../../core/imageStore";
 import { bus } from "../../core/events";
-import { EmptyHint } from "../ui";
+import { AsyncImage, EmptyHint } from "../ui";
 
 /**
  * 联系人 App：角色（Character）的增删改查 + 角色卡导入导出 + AI 捏人 + 拨打电话。
@@ -171,7 +172,24 @@ function CharacterEditor({ characterId, onDone }: { characterId: string | null; 
     sleepFrom: character?.sleepFrom ?? "",
     sleepTo: character?.sleepTo ?? "",
     affection: character?.affection ?? 50,
+    referenceImageIds: character?.referenceImageIds ?? [],
   });
+  const refFileRef = useRef<HTMLInputElement | null>(null);
+
+  const addReferenceImage = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const dataUrl = String(reader.result ?? "");
+      if (!dataUrl) return;
+      const imageId = await saveImage(dataUrl);
+      if (!imageId) return;
+      setDraft((prev) => ({
+        ...prev,
+        referenceImageIds: [...(prev.referenceImageIds ?? []), imageId].slice(0, 3),
+      }));
+    };
+    reader.readAsDataURL(file);
+  };
 
   const save = () => {
     if (!draft.name.trim()) return;
@@ -182,6 +200,7 @@ function CharacterEditor({ characterId, onDone }: { characterId: string | null; 
       exampleDialogue: draft.exampleDialogue?.trim() || undefined,
       sleepFrom: draft.sleepFrom?.trim() || undefined,
       sleepTo: draft.sleepTo?.trim() || undefined,
+      referenceImageIds: draft.referenceImageIds?.length ? draft.referenceImageIds : undefined,
     };
     if (character) {
       updateCharacter(character.id, cleaned);
@@ -310,6 +329,47 @@ function CharacterEditor({ characterId, onDone }: { characterId: string | null; 
         />
         <span className="field-hint">影响 TA 的语气和热情程度；聊天时会随你的话自动涨落，心情由最近的话题决定。</span>
       </label>
+      <div className="field">
+        <span className="field-label">参考图（锁脸生图，最多 3 张）</span>
+        <div className="composer-photo-row">
+          {(draft.referenceImageIds ?? []).map((imageId) => (
+            <div key={imageId} className="composer-photo">
+              <AsyncImage imageId={imageId} className="composer-photo-img" alt="参考图" />
+              <button
+                type="button"
+                className="composer-photo-remove"
+                onClick={() =>
+                  setDraft({
+                    ...draft,
+                    referenceImageIds: (draft.referenceImageIds ?? []).filter((id) => id !== imageId),
+                  })
+                }
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+          {(draft.referenceImageIds?.length ?? 0) < 3 && (
+            <button type="button" className="secondary" onClick={() => refFileRef.current?.click()}>
+              📷 加参考图
+            </button>
+          )}
+          <input
+            ref={refFileRef}
+            type="file"
+            accept="image/*"
+            className="hidden-file"
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              if (file) addReferenceImage(file);
+              event.target.value = "";
+            }}
+          />
+        </div>
+        <span className="field-hint">
+          给 TA 的 /画 和朋友圈配图会带上参考图保持外貌一致（需服务商支持图生图，不支持时自动普通生图）。
+        </span>
+      </div>
       <div className="editor-row">
         <label className="field">
           <span className="field-label">作息·入睡（可选）</span>

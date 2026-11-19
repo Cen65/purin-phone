@@ -26,6 +26,10 @@ interface SettingsState {
   voiceAutoSpeak: boolean;
   /** 记忆自动巩固（P4.5）：聊过一段后自动把新对话并进角色长期记忆 */
   memoryAuto: boolean;
+  /** 印象档案自动巩固：攒够一段新对话后自动刷新"TA 眼中的你" */
+  impressionAuto: boolean;
+  /** 好感度用 LLM 打分（更细腻但每轮回复多一次小请求；关 = 关键词法） */
+  affectionLlm: boolean;
   /** 朋友圈配图：角色发圈时顺手生成一张图（需配置生图模型，失败不影响发文字） */
   momentImageOn: boolean;
   setApi: (patch: Partial<ApiSettings>) => void;
@@ -35,6 +39,8 @@ interface SettingsState {
   setImageModel: (model: string) => void;
   setVoiceAutoSpeak: (on: boolean) => void;
   setMemoryAuto: (on: boolean) => void;
+  setImpressionAuto: (on: boolean) => void;
+  setAffectionLlm: (on: boolean) => void;
   setMomentImageOn: (on: boolean) => void;
 }
 
@@ -55,6 +61,8 @@ export const useSettingsStore = create<SettingsState>()(
       imageModel: "",
       voiceAutoSpeak: false,
       memoryAuto: true,
+      impressionAuto: true,
+      affectionLlm: false,
       momentImageOn: true,
       setApi: (patch) => set((state) => ({ api: { ...state.api, ...patch } })),
       setPersona: (patch) => set((state) => ({ persona: { ...state.persona, ...patch } })),
@@ -63,6 +71,8 @@ export const useSettingsStore = create<SettingsState>()(
       setImageModel: (model) => set({ imageModel: model }),
       setVoiceAutoSpeak: (on) => set({ voiceAutoSpeak: on }),
       setMemoryAuto: (on) => set({ memoryAuto: on }),
+      setImpressionAuto: (on) => set({ impressionAuto: on }),
+      setAffectionLlm: (on) => set({ affectionLlm: on }),
       setMomentImageOn: (on) => set({ momentImageOn: on }),
     }),
     {

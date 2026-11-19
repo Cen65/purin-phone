@@ -17,6 +17,39 @@ function authHeaders(apiKey: string): Record<string, string> {
   };
 }
 
+/** multipart 专用头：不能带 Content-Type，让浏览器自动生成 boundary */
+function authOnlyHeaders(apiKey: string): Record<string, string> {
+  return { Authorization: `Bearer ${apiKey}` };
+}
+
+/** dataURL → Blob（参考图上传 multipart 用；Node 20+/浏览器都有 atob） */
+function dataUrlToBlob(dataUrl: string): Blob {
+  const match = /^data:([^;,]*)(?:;([^,]*))?,(.*)$/.exec(dataUrl);
+  const mime = match?.[1] || "image/png";
+  const payload = match?.[3] ?? dataUrl;
+  const binary = atob(payload);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+  return new Blob([bytes], { type: mime });
+}
+
+/** 锁脸：带参考图走 OpenAI 兼容 /images/edits（multipart，最多带 4 张） */
+async function postImageEdit(request: ImageGenRequest, references: string[]): Promise<Response> {
+  const form = new FormData();
+  form.append("model", request.model);
+  form.append("prompt", `${request.prompt}\n（保持参考图中人物的外貌、发型和穿着一致）`);
+  form.append("n", "1");
+  if (request.size) form.append("size", request.size);
+  for (const dataUrl of references.slice(0, 4)) {
+    form.append("image", dataUrlToBlob(dataUrl), "reference.png");
+  }
+  return fetch(buildUrl(request.baseUrl, "/images/edits"), {
+    method: "POST",
+    headers: authOnlyHeaders(request.apiKey),
+    body: form,
+  });
+}
+
 async function readError(response: Response): Promise<string> {
   let detail = "";
   try {
@@ -122,17 +155,20 @@ export const openaiCompatibleProvider: LLMProvider = {
   },
 
   async generateImage(request: ImageGenRequest): Promise<ImageGenResult> {
-    const response = await fetch(buildUrl(request.baseUrl, "/images/generations"), {
-      method: "POST",
-      headers: authHeaders(request.apiKey),
-      body: JSON.stringify({
-        model: request.model,
-        prompt: request.prompt,
-        n: 1,
-        ...(request.size ? { size: request.size } : {}),
-        response_format: "b64_json",
-      }),
-    });
+    const references = request.reference ?? [];
+    const response = references.length
+      ? await postImageEdit(request, references)
+      : await fetch(buildUrl(request.baseUrl, "/images/generations"), {
+          method: "POST",
+          headers: authHeaders(request.apiKey),
+          body: JSON.stringify({
+            model: request.model,
+            prompt: request.prompt,
+            n: 1,
+            ...(request.size ? { size: request.size } : {}),
+            response_format: "b64_json",
+          }),
+        });
     if (!response.ok) throw new Error(await readError(response));
     const data = (await response.json()) as { data?: Array<{ b64_json?: string; url?: string }> };
     const item = data.data?.[0];

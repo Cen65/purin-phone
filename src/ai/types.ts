@@ -34,6 +34,8 @@ export interface ImageGenRequest extends ProviderConfig {
   prompt: string;
   /** 如 "1024x1024"；不传由服务端决定 */
   size?: string;
+  /** 参考图（锁脸用）：data URL 列表。Provider 支持则走图生图/编辑端点，不支持时忽略 */
+  reference?: string[];
 }
 
 export interface ImageGenResult {

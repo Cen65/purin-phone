@@ -33,6 +33,10 @@ export interface Character {
   styleAction?: boolean;
   /** 记忆游标：最后一次被记忆巩固消费掉的消息 id（见 ai/memory.ts 自动巩固） */
   memoryCursor?: string;
+  /** 印象游标：最后一次被印象自动巩固消费掉的消息 id（见 ai/impression.ts） */
+  impressionCursor?: string;
+  /** 参考图（锁脸生图用）：IndexedDB 图片仓里的 imageId 列表，生图时一并交给模型 */
+  referenceImageIds?: string[];
   /** 好感度 0~100（默认 50）：随每条用户消息按关键词增减，注入提示词影响语气（见 ai/affection.ts） */
   affection?: number;
   /** 心情标签（开心/平静/有点低落/难过）：由最近一次好感增减推导，注入提示词 */

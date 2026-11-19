@@ -65,3 +65,64 @@ export async function mergeImpression(characterId: string): Promise<string> {
   );
   return capMemory(merged, IMPRESSION_LIMIT);
 }
+
+/* ===================== 自动巩固（与记忆同款节奏，更疏） ===================== */
+
+/** 游标后攒够多少条新消息才刷新一次印象 */
+export const IMPRESSION_THRESHOLD = 24;
+/** 两轮自动巩固之间的最小间隔 */
+export const IMPRESSION_COOLDOWN_MS = 30 * 60_000;
+
+const inflightImpression = new Set<string>();
+const lastImpressionAttempt = new Map<string, number>();
+
+/** 游标之后的消息（游标丢失 = 视为全部新） */
+function messagesAfterCursor(messages: ChatMessage[], cursor?: string): ChatMessage[] {
+  if (!cursor) return messages;
+  const index = messages.findIndex((message) => message.id === cursor);
+  return index < 0 ? messages : messages.slice(index + 1);
+}
+
+/**
+ * 印象档案自动巩固：回复完成后 fire-and-forget 调用。
+ * 与手动 👁 共用 mergeImpression 的合并语义；这里直接落库并推进游标。
+ * 阈值比记忆（12 条）高一倍、冷却更长——印象变得慢，别打扰模型。
+ */
+export async function maybeAutoImpression(characterId: string): Promise<void> {
+  const character = useCharactersStore.getState().characters.find((c) => c.id === characterId);
+  if (!character) return;
+  const settings = useSettingsStore.getState();
+  if (settings.impressionAuto === false) return;
+  if (!isApiReady(settings.api)) return;
+  if (inflightImpression.has(characterId)) return;
+  const now = Date.now();
+  const last = lastImpressionAttempt.get(characterId) ?? 0;
+  if (now - last < IMPRESSION_COOLDOWN_MS) return;
+
+  const messages = useChatStore.getState().messages[characterId] ?? [];
+  const segment = messagesAfterCursor(messages, character.impressionCursor).filter((m) => m.content.trim());
+  if (segment.length < IMPRESSION_THRESHOLD) return;
+
+  inflightImpression.add(characterId);
+  lastImpressionAttempt.set(characterId, now);
+  try {
+    const merged = await chatOnce(
+      buildImpressionMessages({
+        character,
+        persona: settings.persona,
+        // 已有印象 + 游标后的新对话（旧印象本身在 prompt 里，不需要全量历史）
+        history: segment,
+      }),
+    );
+    const impression = capMemory(merged, IMPRESSION_LIMIT);
+    if (impression.trim()) {
+      useCharactersStore
+        .getState()
+        .updateCharacter(characterId, { impression, impressionCursor: segment.at(-1)?.id });
+    }
+  } catch (error) {
+    console.warn("[impression] 自动巩固失败，稍后会再试", error);
+  } finally {
+    inflightImpression.delete(characterId);
+  }
+}

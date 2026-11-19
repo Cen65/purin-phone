@@ -569,7 +569,11 @@ function Conversation({ character }: { character: Character }) {
                 className="primary"
                 disabled={!impressionDraft.trim()}
                 onClick={() => {
-                  updateCharacter(character.id, { impression: impressionDraft.trim() });
+                  updateCharacter(character.id, {
+                    impression: impressionDraft.trim(),
+                    // 推进游标，避免自动巩固立刻把旧对话再滚一遍
+                    impressionCursor: messages.at(-1)?.id,
+                  });
                   setImpressionDraft(null);
                   bus.emit("notify", { title: "印象已更新", body: `${character.name} 看你的眼光变了` });
                 }}

@@ -73,3 +73,9 @@ export async function deleteImage(id: string): Promise<void> {
     // ignore
   }
 }
+
+/** 批量读取（锁脸参考图等）：按传入顺序返回 dataURL，缺的跳过 */
+export async function loadImages(ids: string[]): Promise<string[]> {
+  const results = await Promise.all(ids.filter(Boolean).map((id) => loadImage(id)));
+  return results.filter((dataUrl): dataUrl is string => Boolean(dataUrl));
+}
