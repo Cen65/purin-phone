@@ -1,4 +1,5 @@
 import { getApps } from "../apps/registry";
+import { AppTileIcon, Icon } from "../core/icons";
 import { usePhoneStore } from "../state/phoneStore";
 import { useSettingsStore, isApiReady } from "../state/settingsStore";
 
@@ -23,7 +24,7 @@ export function HomeScreen() {
         </div>
         {!isApiReady(api) && (
           <button type="button" className="home-hint" onClick={() => openApp("settings")}>
-            ⚙️ 还没配置 AI 服务，点这里去设置
+            <Icon name="settings" size={14} /> 还没配置 AI 服务，点这里去设置
           </button>
         )}
       </div>
@@ -37,7 +38,7 @@ export function HomeScreen() {
             title={app.description ?? app.name}
           >
             <span className="home-app-icon">
-              <span className="home-app-emoji">{app.icon}</span>
+              <AppTileIcon appId={app.id} emoji={app.icon} />
               {(badges[app.id] ?? 0) > 0 && <span className="home-app-badge">{badges[app.id]}</span>}
             </span>
             <span className="home-app-name">{app.name}</span>
@@ -53,7 +54,7 @@ export function HomeScreen() {
             onClick={() => openApp(app.id)}
             title={app.name}
           >
-            <span className="home-app-emoji">{app.icon}</span>
+            <AppTileIcon appId={app.id} emoji={app.icon} size={50} />
             {(badges[app.id] ?? 0) > 0 && <span className="home-app-badge">{badges[app.id]}</span>}
           </button>
         ))}

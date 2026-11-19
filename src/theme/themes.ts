@@ -32,7 +32,14 @@ export const LIGHT_THEME: PhoneTheme = {
     "c-bubble-user": "#4f6ef7",
     "c-bubble-user-text": "#ffffff",
     "c-bubble-ai": "#ffffff",
-    "home-wall": "linear-gradient(160deg, #dfe6ff 0%, #f6f5fb 45%, #e9f2ee 100%)",
+    "home-wall": "linear-gradient(160deg, #d9e2ff 0%, #f6f5fb 42%, #e9f2ee 72%, #f8f7f2 100%)",
+    glass: "rgba(255, 255, 255, 0.62)",
+    "glass-strong": "rgba(255, 255, 255, 0.78)",
+    "glass-border": "rgba(255, 255, 255, 0.65)",
+    "home-glow":
+      "radial-gradient(130% 75% at 18% 0%, rgba(255, 255, 255, 0.55), transparent 62%), radial-gradient(110% 65% at 92% 100%, rgba(79, 110, 247, 0.16), transparent 68%)",
+    "stage-tint-a": "#2b3150",
+    "stage-tint-b": "#14161f",
   },
 };
 
@@ -53,7 +60,14 @@ export const DARK_THEME: PhoneTheme = {
     "c-bubble-user": "#3d51c9",
     "c-bubble-user-text": "#ffffff",
     "c-bubble-ai": "#1b1b21",
-    "home-wall": "linear-gradient(160deg, #171a2b 0%, #101014 50%, #12201c 100%)",
+    "home-wall": "linear-gradient(160deg, #1a1f38 0%, #101014 48%, #0f1d1a 78%, #121318 100%)",
+    glass: "rgba(24, 24, 32, 0.55)",
+    "glass-strong": "rgba(24, 24, 32, 0.74)",
+    "glass-border": "rgba(255, 255, 255, 0.09)",
+    "home-glow":
+      "radial-gradient(130% 75% at 18% 0%, rgba(255, 255, 255, 0.07), transparent 62%), radial-gradient(110% 65% at 92% 100%, rgba(124, 147, 255, 0.14), transparent 68%)",
+    "stage-tint-a": "#1c2440",
+    "stage-tint-b": "#0d0e13",
   },
 };
 
@@ -74,7 +88,14 @@ const MATCHA_THEME: PhoneTheme = {
     "c-bubble-user": "#5a8a4e",
     "c-bubble-user-text": "#ffffff",
     "c-bubble-ai": "#ffffff",
-    "home-wall": "linear-gradient(160deg, #e2f0dc 0%, #f5f7f0 50%, #eef3e6 100%)",
+    "home-wall": "linear-gradient(160deg, #dceed4 0%, #f5f7f0 45%, #edf3e4 75%, #f7f9f2 100%)",
+    glass: "rgba(255, 255, 255, 0.6)",
+    "glass-strong": "rgba(255, 255, 255, 0.78)",
+    "glass-border": "rgba(255, 255, 255, 0.66)",
+    "home-glow":
+      "radial-gradient(130% 75% at 18% 0%, rgba(255, 255, 255, 0.5), transparent 62%), radial-gradient(110% 65% at 92% 100%, rgba(90, 138, 78, 0.16), transparent 68%)",
+    "stage-tint-a": "#2c3a2c",
+    "stage-tint-b": "#101410",
   },
 };
 
@@ -96,7 +117,14 @@ const PURIN_THEME: PhoneTheme = {
     "c-bubble-user": "#c07f26",
     "c-bubble-user-text": "#ffffff",
     "c-bubble-ai": "#fffdf8",
-    "home-wall": "linear-gradient(160deg, #f7e3c3 0%, #fbf3e4 45%, #f3e7d3 100%)",
+    "home-wall": "linear-gradient(160deg, #f5dfba 0%, #fbf3e4 42%, #f3e7d3 74%, #faf4e8 100%)",
+    glass: "rgba(255, 251, 242, 0.62)",
+    "glass-strong": "rgba(255, 251, 242, 0.8)",
+    "glass-border": "rgba(255, 255, 255, 0.6)",
+    "home-glow":
+      "radial-gradient(130% 75% at 18% 0%, rgba(255, 255, 255, 0.55), transparent 62%), radial-gradient(110% 65% at 92% 100%, rgba(192, 127, 38, 0.16), transparent 68%)",
+    "stage-tint-a": "#4a3520",
+    "stage-tint-b": "#17110a",
   },
 };
 
@@ -118,7 +146,14 @@ const GRAPE_THEME: PhoneTheme = {
     "c-bubble-user": "#7a4fc0",
     "c-bubble-user-text": "#ffffff",
     "c-bubble-ai": "#1c1725",
-    "home-wall": "linear-gradient(160deg, #221a33 0%, #131019 50%, #1a1526 100%)",
+    "home-wall": "linear-gradient(160deg, #261c3a 0%, #131019 48%, #191426 78%, #151221 100%)",
+    glass: "rgba(26, 20, 38, 0.55)",
+    "glass-strong": "rgba(26, 20, 38, 0.74)",
+    "glass-border": "rgba(255, 255, 255, 0.08)",
+    "home-glow":
+      "radial-gradient(130% 75% at 18% 0%, rgba(255, 255, 255, 0.06), transparent 62%), radial-gradient(110% 65% at 92% 100%, rgba(176, 122, 232, 0.15), transparent 68%)",
+    "stage-tint-a": "#2a1f45",
+    "stage-tint-b": "#0e0b16",
   },
 };
 

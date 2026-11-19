@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { getApp } from "../apps/registry";
+import { AppTileIcon, Icon } from "../core/icons";
 import { usePhoneStore } from "../state/phoneStore";
 import { AppErrorBoundary } from "./AppErrorBoundary";
 
@@ -28,23 +29,23 @@ export function AppHost() {
     <div className="app-host">
       <AppErrorBoundary appName={app.name}>
         {fullscreen ? (
-          <Suspense fallback={<div className="app-loading">正在打开 {app.icon}…</div>}>
+          <Suspense fallback={<div className="app-loading">正在打开 {app.name}…</div>}>
             <Content appId={app.id} />
           </Suspense>
         ) : (
           <>
             <header className="app-header">
               <button type="button" className="icon-btn" onClick={goHome} aria-label="回到桌面">
-                ‹
+                <Icon name="back" size={20} />
               </button>
               <div className="app-header-title">
-                <span>{app.icon}</span>
+                <AppTileIcon appId={app.id} emoji={app.icon} size={22} />
                 <span>{app.name}</span>
               </div>
               <span className="icon-btn ghost" aria-hidden="true" />
             </header>
             <div className="app-body">
-              <Suspense fallback={<div className="app-loading">正在打开 {app.icon}…</div>}>
+              <Suspense fallback={<div className="app-loading">正在打开 {app.name}…</div>}>
                 <Content appId={app.id} />
               </Suspense>
             </div>

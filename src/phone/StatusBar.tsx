@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Icon } from "../core/icons";
 import { useNotificationsStore, selectUnreadCount } from "../state/notificationsStore";
 import { usePhoneStore } from "../state/phoneStore";
 import { NotificationPanel } from "./NotificationPanel";
@@ -33,11 +34,11 @@ export function StatusBar() {
               markAllRead();
             }}
           >
-            🔔
+            <Icon name="bell" size={18} />
             {unread > 0 && <span className="notif-bell-dot">{unread > 9 ? "9+" : unread}</span>}
           </button>
           <button type="button" className="lock-btn" title="锁屏" aria-label="锁屏" onClick={lock}>
-            🔒
+            <Icon name="lock" size={16} />
           </button>
           <span aria-hidden="true">
             <span className="signal-bars">
