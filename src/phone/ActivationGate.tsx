@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { getEntitlementProvider, getDeviceInfo } from "../core/entitlement";
 import type { EntitlementState } from "../core/entitlement";
+import { Icon } from "../core/icons";
 
 /**
  * 商用模式激活门：licensed 模式下未激活时挡住整个手机，
@@ -52,7 +53,9 @@ export function ActivationGate({ children }: { children: ReactNode }) {
   return (
     <div className="activation-gate">
       <div className="activation-card">
-        <div className="activation-icon">📱</div>
+        <div className="activation-icon">
+          <Icon name="phone" size={34} />
+        </div>
         <h2>Purin</h2>
         <div className="activation-status">
           {state.status === "unactivated" ? "请输入激活码" : state.message || "授权已失效"}

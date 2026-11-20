@@ -38,8 +38,45 @@ export const LIGHT_THEME: PhoneTheme = {
     "glass-border": "rgba(255, 255, 255, 0.65)",
     "home-glow":
       "radial-gradient(130% 75% at 18% 0%, rgba(255, 255, 255, 0.55), transparent 62%), radial-gradient(110% 65% at 92% 100%, rgba(79, 110, 247, 0.16), transparent 68%)",
+    stage:
+      "radial-gradient(1100px 750px at 12% -8%, rgba(198, 210, 255, 0.7), transparent 62%), radial-gradient(900px 650px at 105% 108%, rgba(206, 226, 214, 0.65), transparent 60%), linear-gradient(165deg, #eef0f7 0%, #e9edf3 55%, #e7ece9 100%)",
+    "frame-shadow":
+      "0 30px 80px rgba(70, 84, 128, 0.28), 0 8px 24px rgba(70, 84, 128, 0.16), inset 0 0 0 1px rgba(255, 255, 255, 0.45)",
     "stage-tint-a": "#2b3150",
     "stage-tint-b": "#14161f",
+  },
+};
+
+/** 樱粉（默认主题）：参考应用图标的粉色系——樱花粉 + 奶油白 + 玫瑰点缀 */
+export const SAKURA_THEME: PhoneTheme = {
+  id: "sakura",
+  label: "樱粉",
+  mode: "light",
+  vars: {
+    "c-bg": "#fdf2f5",
+    "c-surface": "#ffffff",
+    "c-surface-2": "#fae7ed",
+    "c-text": "#432e38",
+    "c-text-dim": "#a68792",
+    "c-border": "#f4dae1",
+    "c-accent": "#ec5f92",
+    "c-accent-soft": "#fde5ed",
+    "c-danger": "#e5484d",
+    "c-bubble-user": "#ec5f92",
+    "c-bubble-user-text": "#ffffff",
+    "c-bubble-ai": "#ffffff",
+    "home-wall": "linear-gradient(160deg, #ffd7e4 0%, #fff8f4 40%, #fdeff4 72%, #fff9f7 100%)",
+    glass: "rgba(255, 255, 255, 0.6)",
+    "glass-strong": "rgba(255, 255, 255, 0.8)",
+    "glass-border": "rgba(255, 255, 255, 0.66)",
+    "home-glow":
+      "radial-gradient(130% 75% at 18% 0%, rgba(255, 255, 255, 0.55), transparent 62%), radial-gradient(110% 65% at 92% 100%, rgba(236, 95, 146, 0.18), transparent 68%)",
+    stage:
+      "radial-gradient(1100px 750px at 12% -8%, rgba(255, 193, 214, 0.75), transparent 62%), radial-gradient(900px 650px at 105% 108%, rgba(255, 224, 202, 0.7), transparent 60%), linear-gradient(165deg, #ffe9f0 0%, #fdf0ec 55%, #f9e6ee 100%)",
+    "frame-shadow":
+      "0 30px 80px rgba(190, 90, 125, 0.30), 0 8px 24px rgba(190, 90, 125, 0.18), inset 0 0 0 1px rgba(255, 255, 255, 0.5)",
+    "stage-tint-a": "#d97a9b",
+    "stage-tint-b": "#f3d9e2",
   },
 };
 
@@ -66,6 +103,10 @@ export const DARK_THEME: PhoneTheme = {
     "glass-border": "rgba(255, 255, 255, 0.09)",
     "home-glow":
       "radial-gradient(130% 75% at 18% 0%, rgba(255, 255, 255, 0.07), transparent 62%), radial-gradient(110% 65% at 92% 100%, rgba(124, 147, 255, 0.14), transparent 68%)",
+    stage:
+      "radial-gradient(1100px 750px at 10% -8%, rgba(64, 84, 160, 0.35), transparent 62%), radial-gradient(900px 650px at 108% 106%, rgba(38, 96, 84, 0.28), transparent 60%), linear-gradient(165deg, #15171f 0%, #0e0f14 55%, #0d1210 100%)",
+    "frame-shadow":
+      "0 30px 90px rgba(0, 0, 0, 0.62), 0 6px 22px rgba(0, 0, 0, 0.42), inset 0 0 0 1px rgba(255, 255, 255, 0.06)",
     "stage-tint-a": "#1c2440",
     "stage-tint-b": "#0d0e13",
   },
@@ -94,6 +135,10 @@ const MATCHA_THEME: PhoneTheme = {
     "glass-border": "rgba(255, 255, 255, 0.66)",
     "home-glow":
       "radial-gradient(130% 75% at 18% 0%, rgba(255, 255, 255, 0.5), transparent 62%), radial-gradient(110% 65% at 92% 100%, rgba(90, 138, 78, 0.16), transparent 68%)",
+    stage:
+      "radial-gradient(1100px 750px at 12% -8%, rgba(196, 226, 186, 0.7), transparent 62%), radial-gradient(900px 650px at 105% 108%, rgba(222, 232, 200, 0.65), transparent 60%), linear-gradient(165deg, #eef3e9 0%, #edf2e8 55%, #e9f0e4 100%)",
+    "frame-shadow":
+      "0 30px 80px rgba(84, 108, 74, 0.26), 0 8px 24px rgba(84, 108, 74, 0.15), inset 0 0 0 1px rgba(255, 255, 255, 0.45)",
     "stage-tint-a": "#2c3a2c",
     "stage-tint-b": "#101410",
   },
@@ -123,6 +168,10 @@ const PURIN_THEME: PhoneTheme = {
     "glass-border": "rgba(255, 255, 255, 0.6)",
     "home-glow":
       "radial-gradient(130% 75% at 18% 0%, rgba(255, 255, 255, 0.55), transparent 62%), radial-gradient(110% 65% at 92% 100%, rgba(192, 127, 38, 0.16), transparent 68%)",
+    stage:
+      "radial-gradient(1100px 750px at 12% -8%, rgba(250, 219, 176, 0.75), transparent 62%), radial-gradient(900px 650px at 105% 108%, rgba(246, 226, 198, 0.7), transparent 60%), linear-gradient(165deg, #f8efe2 0%, #f7edde 55%, #f4e9d8 100%)",
+    "frame-shadow":
+      "0 30px 80px rgba(150, 104, 44, 0.26), 0 8px 24px rgba(150, 104, 44, 0.15), inset 0 0 0 1px rgba(255, 255, 255, 0.5)",
     "stage-tint-a": "#4a3520",
     "stage-tint-b": "#17110a",
   },
@@ -152,6 +201,10 @@ const GRAPE_THEME: PhoneTheme = {
     "glass-border": "rgba(255, 255, 255, 0.08)",
     "home-glow":
       "radial-gradient(130% 75% at 18% 0%, rgba(255, 255, 255, 0.06), transparent 62%), radial-gradient(110% 65% at 92% 100%, rgba(176, 122, 232, 0.15), transparent 68%)",
+    stage:
+      "radial-gradient(1100px 750px at 10% -8%, rgba(94, 62, 148, 0.4), transparent 62%), radial-gradient(900px 650px at 108% 106%, rgba(60, 40, 100, 0.3), transparent 60%), linear-gradient(165deg, #171320 0%, #100d17 55%, #0f0c15 100%)",
+    "frame-shadow":
+      "0 30px 90px rgba(0, 0, 0, 0.64), 0 6px 22px rgba(0, 0, 0, 0.45), inset 0 0 0 1px rgba(255, 255, 255, 0.06)",
     "stage-tint-a": "#2a1f45",
     "stage-tint-b": "#0e0b16",
   },
@@ -246,6 +299,7 @@ export function parseThemePack(json: string): PhoneTheme {
 
 // 注册内置主题
 registerTheme(LIGHT_THEME);
+registerTheme(SAKURA_THEME);
 registerTheme(DARK_THEME);
 registerTheme(MATCHA_THEME);
 registerTheme(PURIN_THEME);

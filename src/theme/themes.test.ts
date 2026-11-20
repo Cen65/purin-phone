@@ -7,6 +7,15 @@ describe("主题注册表", () => {
     expect(ids).toContain("purin");
     expect(ids).toContain("grape");
   });
+
+  it("内置主题包含樱粉（默认主题）且带舞台/外框变量", () => {
+    const sakura = getThemes().find((theme) => theme.id === "sakura")!;
+    expect(sakura).toBeDefined();
+    expect(sakura.label).toBe("樱粉");
+    expect(sakura.vars["c-accent"]).toBe("#ec5f92");
+    expect(sakura.vars["stage"]).toContain("radial-gradient");
+    expect(sakura.vars["frame-shadow"]).toContain("rgba");
+  });
 });
 
 describe("主题包导出 / 导入", () => {

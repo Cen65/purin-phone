@@ -39,6 +39,7 @@ export type IconName =
   | "copy"
   | "check"
   | "info"
+  | "edit"
   | "home";
 
 const PATHS: Record<IconName, ReactNode> = {
@@ -206,6 +207,12 @@ const PATHS: Record<IconName, ReactNode> = {
       <path d="M12 11v5M12 7.8h.01" />
     </>
   ),
+  edit: (
+    <>
+      <path d="M4 20h4l10.5-10.5a2.1 2.1 0 0 0-3-3L5 17z" />
+      <path d="M14.5 6.5l3 3" />
+    </>
+  ),
   home: (
     <>
       <path d="M4.5 10.5 12 4l7.5 6.5" />
@@ -255,17 +262,17 @@ interface TileDef {
   to: string;
 }
 
-/** 内置 App 的磁贴渐变（亮→深 135°）；远程/未知 App 回退 emoji */
+/** 内置 App 的磁贴渐变（亮→深 135°，粉系调和的柔和配色）；远程/未知 App 回退 emoji */
 const APP_TILES: Record<string, TileDef> = {
-  chat: { icon: "chat", from: "#6a9bff", to: "#3d5bf0" },
-  contacts: { icon: "contacts", from: "#5cd6a8", to: "#27a67a" },
-  notes: { icon: "notes", from: "#ffd074", to: "#f09a2e" },
-  settings: { icon: "settings", from: "#aab4c6", to: "#778093" },
-  store: { icon: "store", from: "#9b8cff", to: "#6a4fe8" },
-  moments: { icon: "moments", from: "#ff9db4", to: "#ef4f86" },
-  worldbook: { icon: "worldbook", from: "#9ade7f", to: "#4c9a52" },
-  weather: { icon: "weather", from: "#7cd0f7", to: "#2f9fd8" },
-  anniversary: { icon: "anniversary", from: "#ffb08a", to: "#ef6a3f" },
+  chat: { icon: "chat", from: "#8aa8ff", to: "#5f7df2" },
+  contacts: { icon: "contacts", from: "#7fdcc2", to: "#3fbd97" },
+  notes: { icon: "notes", from: "#ffdd9a", to: "#f6ad55" },
+  settings: { icon: "settings", from: "#c3b9d4", to: "#9d92b8" },
+  store: { icon: "store", from: "#c9a9ff", to: "#9a6df0" },
+  moments: { icon: "moments", from: "#ff9db9", to: "#f2608f" },
+  worldbook: { icon: "worldbook", from: "#aee6a3", to: "#69bf74" },
+  weather: { icon: "weather", from: "#96d9f9", to: "#54b5e3" },
+  anniversary: { icon: "anniversary", from: "#ffb49c", to: "#f57f5a" },
 };
 
 export function AppTileIcon({ appId, emoji, size = 56 }: { appId: string; emoji: string; size?: number }) {

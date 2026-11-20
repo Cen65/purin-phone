@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { useCallStore, formatCallDuration } from "../state/callStore";
 import { useCharactersStore } from "../state/charactersStore";
 import { callReply } from "../ai/creative";
+import { Icon } from "../core/icons";
+import { AvatarView } from "../core/avatars";
 import { bus } from "../core/events";
 
 const QUICK_LINES = ["喂？", "在吗", "哈哈哈", "挂了啊"];
@@ -68,15 +70,15 @@ export function CallHost() {
   if (phase === "incoming") {
     return (
       <div className="call-layer call-incoming">
-        <div className="call-avatar-big">{character?.avatar ?? "📞"}</div>
+        <AvatarView avatar={character?.avatar ?? "📞"} size={84} className="call-avatar-big" />
         <div className="call-name">{character?.name ?? "未知来电"}</div>
         <div className="call-sub">来电……</div>
         <div className="call-actions">
           <button type="button" className="call-btn call-decline" onClick={decline} aria-label="拒接">
-            ✕
+            <Icon name="phone-off" size={22} />
           </button>
           <button type="button" className="call-btn call-accept" onClick={accept} aria-label="接听">
-            📞
+            <Icon name="phone" size={22} />
           </button>
         </div>
       </div>
@@ -86,7 +88,7 @@ export function CallHost() {
   if (phase === "ended") {
     return (
       <div className="call-layer call-ended">
-        <div className="call-avatar-big">{character?.avatar ?? "📞"}</div>
+        <AvatarView avatar={character?.avatar ?? "📞"} size={84} className="call-avatar-big" />
         <div className="call-name">{endedReason ?? "通话结束"}</div>
         <button type="button" className="call-done" onClick={reset}>
           完成
@@ -115,7 +117,7 @@ export function CallHost() {
   return (
     <div className="call-layer call-active">
       <div className="call-head">
-        <span className="call-avatar">{character?.avatar ?? "📞"}</span>
+        <AvatarView avatar={character?.avatar ?? "📞"} size={36} className="call-avatar" />
         <span className="call-name">{character?.name ?? "通话"}</span>
         <span className="call-timer">{elapsed}</span>
       </div>
@@ -146,10 +148,10 @@ export function CallHost() {
           }}
         />
         <button type="button" className="call-send" disabled={thinking || !draft.trim()} onClick={() => void send(draft)}>
-          说
+          <Icon name="send" size={16} />
         </button>
         <button type="button" className="call-hangup" onClick={() => hangup("通话结束")}>
-          挂断
+          <Icon name="phone-off" size={14} /> 挂断
         </button>
       </div>
     </div>

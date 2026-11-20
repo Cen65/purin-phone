@@ -13,7 +13,7 @@ const SEED_V2_KEY = "purin.seed.v2";
 
 const BUNNY = {
   name: "布丁兔",
-  avatar: "🐰",
+  avatar: "svg:bunny",
   tagline: "Purin 的应用内小助手，手机功能有不懂的随时问我。",
   systemPrompt: [
     "你是布丁兔，这部虚拟手机里的小管家，性格软萌但不啰嗦，喜欢用短句。",

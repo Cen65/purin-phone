@@ -3,6 +3,7 @@ import { EXTENSIONS, installApp, installRemoteApp, uninstallApp, isReservedAppId
 import type { CatalogApp } from "../catalog";
 import { parseAppCatalog } from "../catalog";
 import { useAppManagerStore } from "../../state/appManagerStore";
+import { AppTileIcon } from "../../core/icons";
 import { bus } from "../../core/events";
 import type { AppProps } from "../types";
 
@@ -38,7 +39,7 @@ export default function StoreApp(_props: AppProps) {
   return (
     <div className="store">
       <div className="store-hero">
-        <div className="store-hero-icon">🛍️</div>
+        <AppTileIcon appId="store" emoji="🛍️" size={44} />
         <div>
           <div className="store-hero-title">Purin 应用商店</div>
           <div className="store-hero-sub">基础能力在桌面，扩展按需安装</div>
@@ -164,7 +165,7 @@ function RemoteCatalog({ installedRemote }: { installedRemote: Record<string, un
             const taken = isReservedAppId(app.id);
             return (
               <li key={app.id} className="store-row">
-                <div className="store-row-icon">{app.icon}</div>
+                <AppTileIcon appId={app.id} emoji={app.icon} size={40} />
                 <div className="store-row-main">
                   <div className="store-row-name">
                     {app.name}
@@ -206,7 +207,7 @@ function StoreRow({
   const m = def.manifest;
   return (
     <div className="store-row">
-      <div className="store-row-icon">{m.icon}</div>
+      <AppTileIcon appId={m.id} emoji={m.icon} size={40} />
       <div className="store-row-main">
         <div className="store-row-name">
           {m.name}

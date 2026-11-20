@@ -15,6 +15,8 @@ import { forgeCharacter } from "../../ai/characterForge";
 import { affectionStage } from "../../ai/affection";
 import { downloadTextFile } from "../../core/download";
 import { saveImage } from "../../core/imageStore";
+import { Icon } from "../../core/icons";
+import { AvatarView } from "../../core/avatars";
 import { bus } from "../../core/events";
 import { AsyncImage, EmptyHint } from "../ui";
 
@@ -89,13 +91,13 @@ function ContactList({
     <div className="contacts">
       <div className="contacts-actions">
         <button type="button" className="primary" onClick={onCreate}>
-          ＋ 新建角色
+          <Icon name="plus" size={14} /> 新建角色
         </button>
         <button type="button" className="secondary" onClick={onForge}>
-          ✨ AI 捏角色
+          <Icon name="sparkle" size={14} /> AI 捏角色
         </button>
         <button type="button" className="secondary" onClick={() => fileRef.current?.click()}>
-          导入角色卡
+          <Icon name="download" size={14} /> 导入角色卡
         </button>
         <input
           ref={fileRef}
@@ -118,7 +120,7 @@ function ContactList({
               className="contact-main"
               onClick={() => openApp("chat", { characterId: character.id })}
             >
-              <span className="avatar">{character.avatar}</span>
+              <AvatarView avatar={character.avatar} className="avatar" />
               <span className="contact-info">
                 <span className="contact-name">{character.name}</span>
                 <span className="contact-tagline">{character.tagline || "（无简介）"}</span>
@@ -135,7 +137,7 @@ function ContactList({
                   bus.emit("call:incoming", { characterId: character.id });
                 }}
               >
-                📞
+                <Icon name="phone" size={16} />
               </button>
               <button
                 type="button"
@@ -143,7 +145,7 @@ function ContactList({
                 onClick={() => onEdit(character.id)}
                 aria-label={`编辑 ${character.name}`}
               >
-                ✏️
+                <Icon name="edit" size={16} />
               </button>
             </span>
           </li>
@@ -248,7 +250,7 @@ function CharacterEditor({ characterId, onDone }: { characterId: string | null; 
         />
       </label>
       <label className="field">
-        <span className="field-label">长期记忆（会和设定一起注入提示词，可在聊天里点 🧠 自动总结）</span>
+        <span className="field-label">长期记忆（会和设定一起注入提示词，可在聊天页顶部点「总结记忆」自动总结）</span>
         <textarea
           rows={4}
           value={draft.memory ?? ""}
@@ -351,7 +353,7 @@ function CharacterEditor({ characterId, onDone }: { characterId: string | null; 
           ))}
           {(draft.referenceImageIds?.length ?? 0) < 3 && (
             <button type="button" className="secondary" onClick={() => refFileRef.current?.click()}>
-              📷 加参考图
+              <Icon name="image" size={14} /> 加参考图
             </button>
           )}
           <input
@@ -408,7 +410,7 @@ function CharacterEditor({ characterId, onDone }: { characterId: string | null; 
               )
             }
           >
-            导出角色卡
+            <Icon name="download" size={14} /> 导出角色卡
           </button>
         )}
         {character && (
@@ -508,7 +510,9 @@ function ForgeWizard({ onDone, onManual }: { onDone: () => void; onManual: () =>
   if (result) {
     return (
       <div className="editor">
-        <h3 className="forge-title">✨ 预览 · 满意就保存</h3>
+        <h3 className="forge-title">
+          <Icon name="sparkle" size={18} /> 预览 · 满意就保存
+        </h3>
         <div className="editor-row">
           <label className="field avatar-field">
             <span className="field-label">头像</span>
@@ -567,7 +571,9 @@ function ForgeWizard({ onDone, onManual }: { onDone: () => void; onManual: () =>
 
   return (
     <div className="editor">
-      <h3 className="forge-title">✨ AI 捏角色</h3>
+      <h3 className="forge-title">
+        <Icon name="sparkle" size={18} /> AI 捏角色
+      </h3>
       <p className="forge-hint">填几个关键词（都可留空），AI 会生成名字、设定、开场白。</p>
       <div className="editor-row">
         <label className="field">

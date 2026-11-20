@@ -6,11 +6,13 @@ import { useSettingsStore, isApiReady } from "../../state/settingsStore";
 import { generateMoment } from "../../ai/creative";
 import { usePhoneStore } from "../../state/phoneStore";
 import { saveImage } from "../../core/imageStore";
+import { Icon } from "../../core/icons";
+import { AvatarView } from "../../core/avatars";
 import { EmptyHint, AsyncImage } from "../ui";
 
 /**
  * 朋友圈 App（P2）：角色和"我"都能发动态；可点赞、评论。
- * 「✨」随机挑一位角色让 TA 发一条（AI 生成）；「📷」自己发。
+ * 「谁发一条」随机挑一位角色让 TA 发一条（AI 生成）；「发动态」自己发。
  */
 export default function MomentsApp(_props: AppProps) {
   const moments = useMomentsStore((s) => s.moments);
@@ -67,10 +69,16 @@ export default function MomentsApp(_props: AppProps) {
         <span>朋友圈</span>
         <span className="moments-actions">
           <button type="button" className="link-btn" onClick={() => void randomPost()} disabled={generating || characters.length === 0}>
-            {generating ? "生成中…" : "✨ 谁发一条"}
+            {generating ? (
+              "生成中…"
+            ) : (
+              <>
+                <Icon name="sparkle" size={14} /> 谁发一条
+              </>
+            )}
           </button>
           <button type="button" className="link-btn" onClick={() => setComposing((v) => !v)}>
-            📷 发动态
+            <Icon name="image" size={14} /> 发动态
           </button>
         </span>
       </div>
@@ -93,7 +101,7 @@ export default function MomentsApp(_props: AppProps) {
               </div>
             ) : (
               <button type="button" className="secondary" onClick={() => fileRef.current?.click()}>
-                📷 配张图
+                <Icon name="image" size={14} /> 配张图
               </button>
             )}
             <input
@@ -124,7 +132,7 @@ export default function MomentsApp(_props: AppProps) {
         </div>
       )}
 
-      {moments.length === 0 && <EmptyHint>还没有动态，点「✨ 谁发一条」让角色发个朋友圈吧</EmptyHint>}
+      {moments.length === 0 && <EmptyHint>还没有动态，点「谁发一条」让角色发个朋友圈吧</EmptyHint>}
 
       <ul className="moments-list">
         {moments.map((moment) => (
@@ -145,7 +153,7 @@ function MomentCard({ moment }: { moment: Moment }) {
   return (
     <li className="moment-card">
       <div className="moment-head">
-        <span className="avatar small">{moment.authorAvatar}</span>
+        <AvatarView avatar={moment.authorAvatar} size={26} className="avatar small" />
         <span className="moment-author">{moment.authorName}</span>
         <span className="moment-time">{relativeTime(moment.createdAt)}</span>
         {moment.authorId === "me" && (
@@ -157,7 +165,7 @@ function MomentCard({ moment }: { moment: Moment }) {
               if (window.confirm("删除这条动态？")) removeMoment(moment.id);
             }}
           >
-            ✕
+            <Icon name="x" size={14} />
           </button>
         )}
       </div>
@@ -175,9 +183,16 @@ function MomentCard({ moment }: { moment: Moment }) {
       {moment.imageId && <AsyncImage imageId={moment.imageId} className="moment-photo" alt="动态配图" />}
       <div className="moment-foot">
         <button type="button" className={`moment-like ${liked ? "moment-like-on" : ""}`} onClick={() => toggleLike(moment.id, "me")}>
-          {liked ? "❤️" : "🤍"} {moment.likes.length > 0 ? moment.likes.length : ""}
+          <Icon name="heart" size={14} style={liked ? { fill: "currentColor" } : undefined} />{" "}
+          {moment.likes.length > 0 ? moment.likes.length : ""}
         </button>
-        <span className="moment-comment-count">{moment.comments.length > 0 ? `💬 ${moment.comments.length}` : ""}</span>
+        <span className="moment-comment-count">
+          {moment.comments.length > 0 && (
+            <>
+              <Icon name="comment" size={13} /> {moment.comments.length}
+            </>
+          )}
+        </span>
       </div>
       {moment.comments.length > 0 && (
         <ul className="moment-comments">

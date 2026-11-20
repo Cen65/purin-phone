@@ -12,6 +12,8 @@ import { renderMarkdown } from "../../core/md";
 import { downloadTextFile } from "../../core/download";
 import { loadImage } from "../../core/imageStore";
 import { speak, stopSpeaking, asrSupported, listen } from "../../core/tts";
+import { Icon } from "../../core/icons";
+import { AvatarView } from "../../core/avatars";
 import { bus } from "../../core/events";
 import type { Character } from "../../types";
 
@@ -49,7 +51,13 @@ function ConversationList() {
       <div className="chat-list-head">
         <span>聊天</span>
         <button type="button" className="link-btn" onClick={() => setComposing((v) => !v)}>
-          {composing ? "取消" : "+ 建群"}
+          {composing ? (
+            "取消"
+          ) : (
+            <>
+              <Icon name="plus" size={14} /> 建群
+            </>
+          )}
         </button>
       </div>
       {composing && <GroupComposer onDone={() => setComposing(false)} />}
@@ -73,7 +81,9 @@ function ConversationList() {
                   className="chat-list-row"
                   onClick={() => openApp("chat", { groupId: group.id })}
                 >
-                  <span className="avatar">👪</span>
+                  <span className="avatar avatar-group">
+                    <Icon name="contacts" size={20} />
+                  </span>
                   <span className="chat-list-main">
                     <span className="chat-list-name">{group.name}</span>
                     <span className="chat-list-preview">
@@ -97,7 +107,7 @@ function ConversationList() {
                 className="chat-list-row"
                 onClick={() => openApp("chat", { characterId: character.id })}
               >
-                <span className="avatar">{character.avatar}</span>
+                <AvatarView avatar={character.avatar} className="avatar" />
                 <span className="chat-list-main">
                   <span className="chat-list-name">{character.name}</span>
                   <span className="chat-list-preview">
@@ -147,7 +157,7 @@ function GroupComposer({ onDone }: { onDone: () => void }) {
             className={`chip ${selected.includes(character.id) ? "chip-on" : ""}`}
             onClick={() => toggle(character.id)}
           >
-            {character.avatar} {character.name}
+            <AvatarView avatar={character.avatar} size={18} /> {character.name}
           </button>
         ))}
       </div>
@@ -206,7 +216,7 @@ function ChatImage({ imageId, prompt, pending }: { imageId?: string; prompt: str
   if (pending) {
     return (
       <div className="chat-image-pending">
-        <span className="chat-image-spinner">🎨</span> 正在画：{prompt.slice(0, 60)}
+        <Icon name="image" size={16} className="chat-image-spinner" /> 正在画：{prompt.slice(0, 60)}
       </div>
     );
   }
@@ -230,7 +240,7 @@ function Bubble({
   const isImage = message.kind === "image";
   return (
     <div className={`bubble-row ${isUser ? "mine" : ""}`}>
-      {!isUser && speakerAvatar && <span className="avatar small">{speakerAvatar}</span>}
+      {!isUser && speakerAvatar && <AvatarView avatar={speakerAvatar} size={22} className="avatar small" />}
       <div className={`bubble ${message.status === "error" ? "bubble-error" : ""}`}>
         {!isUser && speakerName && <div className="msg-speaker">{speakerName}</div>}
         {isUser ? (
@@ -248,7 +258,7 @@ function Bubble({
         {message.status === "streaming" && !isImage && message.content && <span className="stream-cursor">▋</span>}
         {!isUser && message.status === "done" && !isImage && message.content && (
           <button type="button" className="link-btn bubble-speak" onClick={() => speak(message.content)}>
-            🔊 朗读
+            <Icon name="volume" size={12} /> 朗读
           </button>
         )}
         {message.status === "error" && (
@@ -375,12 +385,13 @@ function Conversation({ character }: { character: Character }) {
     <div className="chat-room">
       <header className="chat-room-header">
         <button type="button" className="icon-btn" onClick={() => openApp("chat")} aria-label="返回会话列表">
-          ‹
+          <Icon name="back" size={20} />
         </button>
-        <span className="avatar small">{character.avatar}</span>
+        <AvatarView avatar={character.avatar} size={30} className="avatar small" />
         <span className="chat-room-name">{character.name}</span>
         <span className="affection-chip" title="好感度与心情（随聊天自动变化，可在联系人编辑里调整）">
-          💗 {character.affection ?? 50} · {character.mood ?? "平静"}
+          <Icon name="heart" size={11} style={{ fill: "currentColor", color: "var(--c-accent)" }} />{" "}
+          {character.affection ?? 50} · {character.mood ?? "平静"}
         </span>
         <span className="chat-tools">
           <button
@@ -394,7 +405,7 @@ function Conversation({ character }: { character: Character }) {
               if (!next) stopSpeaking();
             }}
           >
-            {voiceAutoSpeak ? "🔊" : "🔇"}
+            <Icon name="volume" size={16} />
           </button>
           <button
             type="button"
@@ -404,7 +415,7 @@ function Conversation({ character }: { character: Character }) {
             disabled={impressionBusy || generating || messages.length < 4}
             onClick={() => void summarizeImpression()}
           >
-            {impressionBusy ? "⏳" : "👁"}
+            <Icon name="eye" size={16} />
           </button>
           <button
             type="button"
@@ -414,7 +425,7 @@ function Conversation({ character }: { character: Character }) {
             disabled={memoryBusy || generating || messages.length < 4}
             onClick={() => void summarizeMemory()}
           >
-            {memoryBusy ? "⏳" : "🧠"}
+            <Icon name="sparkle" size={16} />
           </button>
           <button
             type="button"
@@ -429,7 +440,7 @@ function Conversation({ character }: { character: Character }) {
               downloadTextFile(`${character.name}-聊天记录.txt`, text || "（暂无消息）");
             }}
           >
-            ⬇
+            <Icon name="download" size={16} />
           </button>
           <button
             type="button"
@@ -440,7 +451,7 @@ function Conversation({ character }: { character: Character }) {
               if (window.confirm(`清空与 ${character.name} 的聊天记录？`)) clearConversation(character.id);
             }}
           >
-            🧹
+            <Icon name="trash" size={16} />
           </button>
         </span>
       </header>
@@ -481,14 +492,14 @@ function Conversation({ character }: { character: Character }) {
             aria-label="语音输入"
             onClick={toggleListening}
           >
-            🎤
+            <Icon name="mic" size={16} />
           </button>
         )}
         <input
           value={draft}
           placeholder={
             listening
-              ? "正在听…（说完点 🎤 结束）"
+              ? "正在听…（说完点麦克风结束）"
               : generating
                 ? "对方正在输入…"
                 : `发消息给 ${character.name}（/画 xxx 可生图）`
@@ -501,11 +512,11 @@ function Conversation({ character }: { character: Character }) {
         />
         {generating ? (
           <button type="button" className="stop-btn" onClick={() => stopGeneration(character.id)}>
-            停止
+            <Icon name="stop" size={14} /> 停止
           </button>
         ) : (
-          <button type="button" className="primary" onClick={submit} disabled={!draft.trim()}>
-            发送
+          <button type="button" className="primary send-btn" onClick={submit} disabled={!draft.trim()}>
+            <Icon name="send" size={15} /> 发送
           </button>
         )}
       </footer>
@@ -513,7 +524,9 @@ function Conversation({ character }: { character: Character }) {
       {memoryDraft !== null && (
         <div className="modal-mask" onClick={() => setMemoryDraft(null)}>
           <div className="modal-card" onClick={(event) => event.stopPropagation()}>
-            <h3 className="modal-title">🧠 总结记忆 · {character.name}</h3>
+            <h3 className="modal-title">
+              <Icon name="sparkle" size={18} /> 总结记忆 · {character.name}
+            </h3>
             <p className="modal-hint">
               AI 把最近的聊天要点合并成了这份长期记忆（原有记忆尽量保留）。可手动修改，保存后随设定一起注入提示词。
             </p>
@@ -551,7 +564,9 @@ function Conversation({ character }: { character: Character }) {
       {impressionDraft !== null && (
         <div className="modal-mask" onClick={() => setImpressionDraft(null)}>
           <div className="modal-card" onClick={(event) => event.stopPropagation()}>
-            <h3 className="modal-title">👁 印象档案 · {character.name} 眼中的你</h3>
+            <h3 className="modal-title">
+              <Icon name="eye" size={18} /> 印象档案 · {character.name} 眼中的你
+            </h3>
             <p className="modal-hint">
               这是 {character.name} 对你的印象（性格/喜好/关系远近）。可手动修改，保存后注入提示词，影响
               TA 对你的态度和亲疏。
@@ -629,9 +644,11 @@ function GroupConversation({ group }: { group: Group }) {
     <div className="chat-room">
       <header className="chat-room-header">
         <button type="button" className="icon-btn" onClick={() => openApp("chat")} aria-label="返回会话列表">
-          ‹
+          <Icon name="back" size={20} />
         </button>
-        <span className="avatar small">👪</span>
+        <span className="avatar avatar-group">
+          <Icon name="contacts" size={18} />
+        </span>
         <span className="chat-room-main">
           <span className="chat-room-name">{group.name}</span>
           <span className="chat-room-sub">{members.map((m) => m.name).join("、") || "成员都已删除"}</span>
@@ -663,7 +680,7 @@ function GroupConversation({ group }: { group: Group }) {
               downloadTextFile(`${group.name}-聊天记录.txt`, text || "（暂无消息）");
             }}
           >
-            ⬇
+            <Icon name="download" size={16} />
           </button>
           <button
             type="button"
@@ -674,7 +691,7 @@ function GroupConversation({ group }: { group: Group }) {
               if (window.confirm(`清空「${group.name}」的聊天记录？`)) clearConversation(conversationId);
             }}
           >
-            🧹
+            <Icon name="trash" size={16} />
           </button>
         </span>
       </header>
@@ -717,11 +734,16 @@ function GroupConversation({ group }: { group: Group }) {
         />
         {generating ? (
           <button type="button" className="stop-btn" onClick={() => stopGeneration(conversationId)}>
-            停止
+            <Icon name="stop" size={14} /> 停止
           </button>
         ) : (
-          <button type="button" className="primary" onClick={submit} disabled={!draft.trim() || members.length === 0}>
-            发送
+          <button
+            type="button"
+            className="primary send-btn"
+            onClick={submit}
+            disabled={!draft.trim() || members.length === 0}
+          >
+            <Icon name="send" size={15} /> 发送
           </button>
         )}
       </footer>

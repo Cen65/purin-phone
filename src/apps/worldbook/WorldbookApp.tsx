@@ -16,6 +16,8 @@ import {
   type WorldbookEntryPosition,
 } from "../../core/worldbook";
 import { downloadTextFile } from "../../core/download";
+import { Icon } from "../../core/icons";
+import { AvatarView } from "../../core/avatars";
 import { bus } from "../../core/events";
 import { EmptyHint } from "../ui";
 
@@ -180,7 +182,7 @@ function BookEditor({ book, onBack }: { book: Worldbook; onBack: () => void }) {
               className={`chip ${character.worldbookIds?.includes(book.id) ? "chip-on" : ""}`}
               onClick={() => toggleCharacterBinding(character.id)}
             >
-              {character.avatar} {character.name}
+              <AvatarView avatar={character.avatar} size={16} /> {character.name}
             </button>
           ))}
         </div>
@@ -196,7 +198,7 @@ function BookEditor({ book, onBack }: { book: Worldbook; onBack: () => void }) {
                 className={`chip ${group.worldbookIds?.includes(book.id) ? "chip-on" : ""}`}
                 onClick={() => toggleGroupBinding(group.id)}
               >
-                👪 {group.name}
+                <Icon name="contacts" size={14} /> {group.name}
               </button>
             ))}
           </div>

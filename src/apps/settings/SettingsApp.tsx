@@ -242,14 +242,14 @@ export default function SettingsApp(_props: AppProps) {
             </select>
           </div>
         </Field>
-        <Field label="记忆自动巩固" hint="聊过约 12 条后，自动把新对话要点并进角色的长期记忆（也可在聊天里手动点 🧠）">
+        <Field label="记忆自动巩固" hint="聊过约 12 条后，自动把新对话要点并进角色的长期记忆（也可在聊天页顶部手动总结）">
           <div className="inline-row">
             <button type="button" className="secondary" onClick={() => setMemoryAuto(!memoryAuto)}>
               {memoryAuto ? "已开启（点击关闭）" : "已关闭（点击开启）"}
             </button>
           </div>
         </Field>
-        <Field label="印象自动巩固" hint="攒够约 24 条新对话后，自动刷新「TA 眼中的你」并注入提示词（也可在聊天里手动点 👁）">
+        <Field label="印象自动巩固" hint="攒够约 24 条新对话后，自动刷新「TA 眼中的你」并注入提示词（也可在聊天页顶部手动刷新）">
           <div className="inline-row">
             <button type="button" className="secondary" onClick={() => setImpressionAuto(!impressionAuto)}>
               {impressionAuto ? "已开启（点击关闭）" : "已关闭（点击开启）"}

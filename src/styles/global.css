@@ -1,26 +1,30 @@
 /* ===== 全局基础 ===== */
+/* 默认值 = 樱粉主题（首屏未 hydrate 时也是粉色；主题系统会按所选主题整体覆盖） */
 :root {
-  --c-bg: #f4f4f6;
+  --c-bg: #fdf2f5;
   --c-surface: #ffffff;
-  --c-surface-2: #ececef;
-  --c-text: #1c1c20;
-  --c-text-dim: #7a7a85;
-  --c-border: #e2e2e6;
-  --c-accent: #4f6ef7;
-  --c-accent-soft: #e5eaff;
+  --c-surface-2: #fae7ed;
+  --c-text: #432e38;
+  --c-text-dim: #a68792;
+  --c-border: #f4dae1;
+  --c-accent: #ec5f92;
+  --c-accent-soft: #fde5ed;
   --c-danger: #e5484d;
-  --c-bubble-user: #4f6ef7;
+  --c-bubble-user: #ec5f92;
   --c-bubble-user-text: #ffffff;
   --c-bubble-ai: #ffffff;
-  --home-wall: linear-gradient(160deg, #dfe6ff 0%, #f6f5fb 45%, #e9f2ee 100%);
+  --home-wall: linear-gradient(160deg, #ffd7e4 0%, #fff8f4 40%, #fdeff4 72%, #fff9f7 100%);
   /* 视觉系统（主题可覆盖）：玻璃、壁纸光晕、舞台背景 */
-  --glass: rgba(255, 255, 255, 0.62);
-  --glass-strong: rgba(255, 255, 255, 0.78);
-  --glass-border: rgba(255, 255, 255, 0.65);
+  --glass: rgba(255, 255, 255, 0.6);
+  --glass-strong: rgba(255, 255, 255, 0.8);
+  --glass-border: rgba(255, 255, 255, 0.66);
   --home-glow: radial-gradient(130% 75% at 18% 0%, rgba(255, 255, 255, 0.55), transparent 62%),
-    radial-gradient(110% 65% at 92% 100%, rgba(79, 110, 247, 0.16), transparent 68%);
-  --stage-tint-a: #2b3150;
-  --stage-tint-b: #14161f;
+    radial-gradient(110% 65% at 92% 100%, rgba(236, 95, 146, 0.18), transparent 68%);
+  --stage: radial-gradient(1100px 750px at 12% -8%, rgba(255, 193, 214, 0.75), transparent 62%),
+    radial-gradient(900px 650px at 105% 108%, rgba(255, 224, 202, 0.7), transparent 60%),
+    linear-gradient(165deg, #ffe9f0 0%, #fdf0ec 55%, #f9e6ee 100%);
+  --frame-shadow: 0 30px 80px rgba(190, 90, 125, 0.3), 0 8px 24px rgba(190, 90, 125, 0.18),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.5);
 }
 
 * {
@@ -35,10 +39,7 @@ body {
 
 body {
   font-family: system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
-  background:
-    radial-gradient(90vw 60vh at 12% -8%, color-mix(in srgb, var(--stage-tint-a) 55%, transparent), transparent 70%),
-    radial-gradient(80vw 55vh at 105% 108%, color-mix(in srgb, var(--stage-tint-a) 38%, transparent), transparent 72%),
-    linear-gradient(170deg, var(--stage-tint-b), #0a0b0e 85%);
+  background: var(--stage);
   background-attachment: fixed;
   color: var(--c-text);
   min-height: 100dvh;
@@ -103,10 +104,7 @@ textarea {
   display: flex;
   flex-direction: column;
   border: 1px solid rgba(255, 255, 255, 0.09);
-  box-shadow:
-    0 34px 100px rgba(0, 0, 0, 0.62),
-    0 6px 22px rgba(0, 0, 0, 0.42),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+  box-shadow: var(--frame-shadow, 0 34px 100px rgba(0, 0, 0, 0.62));
 }
 
 @media (max-width: 430px) {
@@ -223,11 +221,10 @@ textarea {
 }
 
 .home-date {
-  font-size: 22px;
-  font-weight: 300;
-  letter-spacing: 0.5px;
-  color: var(--c-text);
-  opacity: 0.92;
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: 0.3px;
+  color: var(--c-text-dim);
 }
 
 .home-hint {
@@ -1918,14 +1915,9 @@ button.link-btn {
 
 /* ===== P4：宽屏氛围（≥720px 给手机壳一个舞台） ===== */
 @media (min-width: 720px) {
-  body {
-    background:
-      radial-gradient(600px 400px at 15% 10%, color-mix(in srgb, var(--c-accent) 14%, transparent), transparent 70%),
-      radial-gradient(500px 350px at 85% 90%, color-mix(in srgb, var(--c-accent) 10%, transparent), transparent 70%),
-      var(--c-bg);
-  }
+  /* 宽屏：舞台背景全尺寸生效（var(--stage) 已按主题给出合适构图），只增强外框投影 */
   .phone-frame {
-    box-shadow: 0 30px 80px rgb(0 0 0 / 35%), 0 0 0 1px var(--c-border);
+    box-shadow: var(--frame-shadow, 0 30px 80px rgb(0 0 0 / 35%));
   }
 }
 
@@ -2316,6 +2308,59 @@ button:active:not(.nav-pill) {
 /* 打字机流式光标加强（玻璃气泡下更清晰） */
 .stream-cursor {
   text-shadow: 0 0 6px currentColor;
+}
+
+/* ===== 粉系重设计：图标按钮排版补充 ===== */
+/* 带图标 + 文案的按钮统一 inline-flex 排版（图标与文字垂直居中） */
+.contacts-actions button,
+.editor-actions button,
+.stop-btn,
+.send-btn,
+.link-btn,
+.call-hangup,
+.moments-actions .link-btn,
+.composer-photo-row .secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.stop-btn {
+  gap: 5px;
+}
+
+/* 标题行图标（弹窗/捏人向导） */
+.modal-title,
+.forge-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 群聊占位头像：accent 色底的线性图标（替代原 emoji） */
+.avatar.avatar-group {
+  background: var(--c-accent-soft);
+  color: var(--c-accent);
+}
+
+/* 好感度小胶囊：图标 + 文字 */
+.affection-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* 朗读小按钮的图标行 */
+.bubble-speak {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* 生图等待行图标 */
+.chat-image-pending svg {
+  flex: none;
 }
 
 

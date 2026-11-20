@@ -25,7 +25,7 @@ describe("种子数据 · 布丁兔", () => {
     const characters = useCharactersStore.getState().characters;
     expect(characters).toHaveLength(1);
     expect(characters[0]?.name).toBe("布丁兔");
-    expect(characters[0]?.avatar).toBe("🐰");
+    expect(characters[0]?.avatar).toBe("svg:bunny");
     expect(characters[0]?.systemPrompt).toContain("世界书");
     expect(backing["purin.seed.v2"]).toBe("1");
   });

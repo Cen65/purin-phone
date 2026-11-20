@@ -56,7 +56,7 @@ export const useSettingsStore = create<SettingsState>()(
     (set) => ({
       api: DEFAULT_API,
       persona: { nickname: "" },
-      themeId: "light",
+      themeId: "sakura",
       windowSize: 20,
       imageModel: "",
       voiceAutoSpeak: false,
@@ -77,8 +77,16 @@ export const useSettingsStore = create<SettingsState>()(
     }),
     {
       name: "purin.settings",
-      version: 1,
+      version: 2,
       storage: createJSONStorage(() => safeLocalStorage),
+      // v1 → v2：默认主题换成樱粉；只在用户还停留在旧默认"light"时引导过去，明确选过别的主题则尊重
+      migrate: (state) => {
+        const saved = (state ?? {}) as { themeId?: string };
+        if (saved.themeId === "light" || saved.themeId === undefined) {
+          return { ...saved, themeId: "sakura" } as SettingsState;
+        }
+        return state as SettingsState;
+      },
     },
   ),
 );
